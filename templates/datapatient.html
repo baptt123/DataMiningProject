@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block title %}Home{% endblock title %}
+
+{% block body %}
+<!-- Page Header -->
+<header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/heart5.jpg') }}')">
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-12">
+                <div class="site-heading">
+                    <h1>{{ params['blog_name'] }}</h1>
+                    <span class="subheading">Heart Failure Prediction System</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<div class="container px-4 px-lg-5 mt-5">
+    <!-- Data Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="thead-dark">
+                <tr>
+                    <th>No.</th>
+                    <th>Detail</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Birthdate</th>
+                    <th>Gender</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in data %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>
+                        <button class="btn btn-info btn-sm">Details</button>
+                    </td>
+                    <td>{{ record.full_name }}</td>
+                    <td>{{ record.email }}</td>
+                    <td>{{ record.birthdate }}</td>
+                    <td>
+                        <span class="badge {% if record.gender == 'Female' %}badge-pink{% else %}badge-blue{% endif %}">
+                            {{ record.gender }}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-success btn-sm">View</button>
+                        <button class="btn btn-primary btn-sm">Edit</button>
+                        <button class="btn btn-danger btn-sm">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

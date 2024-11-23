@@ -1,0 +1,121 @@
+{% extends "layout.html" %}
+{% block title %}Chẩn Đoán Bệnh Tim Bằng Naive Bayes{% endblock title %}
+{% block body %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="text-center">Chẩn Đoán Bệnh Tim Sử Dụng Thuật Toán Naive Bayes</h2>
+                </div>
+                <div class="card-body">
+                    <section class="mb-4">
+                        <h3>Giới Thiệu Thuật Toán Naive Bayes</h3>
+                        <p>Naive Bayes là một thuật toán phân loại xác suất dựa trên định lý Bayes, được sử dụng trong việc chẩn đoán bệnh tim. Thuật toán này hoạt động dựa trên nguyên tắc tính toán xác suất của từng đặc điểm.</p>
+                    </section>
+
+                    <section class="mb-4">
+                        <h3>Nguyên Lý Hoạt Động</h3>
+                        <ul>
+                            <li>Tính toán xác suất xuất hiện của mỗi đặc điểm</li>
+                            <li>Độc lập hóa các đặc điểm (giả định Naive)</li>
+                            <li>Tính toán xác suất cuối cùng cho việc chẩn đoán</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3>Nhập Thông Tin Chẩn Đoán</h3>
+                        <form id="heartDiagnosisForm" method="POST" action="/predict">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Tuổi</label>
+                                    <input type="number" class="form-control" name="age" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Giới Tính</label>
+                                    <select class="form-select" name="sex" required>
+                                        <option value="">Chọn Giới Tính</option>
+                                        <option value="1">Nam</option>
+                                        <option value="0">Nữ</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Huyết Áp Tâm Thu (mmHg)</label>
+                                    <input type="number" class="form-control" name="bp" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Cholesterol</label>
+                                    <input type="number" class="form-control" name="cholesterol" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Đường Huyết</label>
+                                    <input type="number" class="form-control" name="glucose" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Tiền Sử Gia Đình</label>
+                                    <select class="form-select" name="family_history" required>
+                                        <option value="">Chọn</option>
+                                        <option value="1">Có</option>
+                                        <option value="0">Không</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    Chẩn Đoán Ngay
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </div>
+
+            <div class="card mt-4 shadow-lg">
+                <div class="card-header bg-success text-white">
+                    <h3 class="text-center">Kết Quả Chẩn Đoán</h3>
+                </div>
+                <div class="card-body" id="resultSection">
+                    {% if prediction %}
+                        <div class="alert {% if prediction == 'Nguy Cơ Cao' %}alert-danger{% else %}alert-success{% endif %}">
+                            <h4>Kết Quả: {{ prediction }}</h4>
+                            <p>Xác Suất: {{ probability }}%</p>
+                        </div>
+                    {% else %}
+                        <p class="text-center">Vui lòng nhập thông tin để được chẩn đoán</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Xử lý form submit bằng AJAX (tùy chọn)
+    document.getElementById('heartDiagnosisForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Gửi request AJAX đến server
+        fetch('/predict', {
+            method: 'POST',
+            body: new FormData(this)
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Cập nhật kết quả
+            document.getElementById('resultSection').innerHTML = `
+                <div class="alert ${data.prediction === 'Nguy Cơ Cao' ? 'alert-danger' : 'alert-success'}">
+                    <h4>Kết Quả: ${data.prediction}</h4>
+                    <p>Xác Suất: ${data.probability}%</p>
+                </div>
+            `;
+        });
+    });
+</script>
+{% endblock body %}

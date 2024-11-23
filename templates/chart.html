@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+{% block title %}Home{% endblock title %}
+{% block body %}
+<!-- Thêm thẻ link Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Phần hiển thị biểu đồ -->
+<section class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <canvas id="heartDiseaseChart"></canvas>
+        </div>
+        <div class="col-md-6">
+            <canvas id="riskFactorsChart"></canvas>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Biểu đồ tỷ lệ bệnh tim
+    var heartDiseaseCtx = document.getElementById('heartDiseaseChart').getContext('2d');
+    var heartDiseaseChart = new Chart(heartDiseaseCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Có Bệnh Tim', 'Không Có Bệnh Tim'],
+            datasets: [{
+                data: [{{ heart_disease_positive }}, {{ heart_disease_negative }}],
+                backgroundColor: ['#FF6384', '#36A2EB']
+            }]
+        },
+        options: {
+            responsive: true,
+            title: {
+                display: true,
+                text: 'Tỷ Lệ Bệnh Tim'
+            }
+        }
+    });
+
+    // Biểu đồ các yếu tố rủi ro
+    var riskFactorsCtx = document.getElementById('riskFactorsChart').getContext('2d');
+    var riskFactorsChart = new Chart(riskFactorsCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Tuổi', 'Huyết Áp', 'Cholesterol', 'Đường Huyết'],
+            datasets: [{
+                label: 'Mức Độ Rủi Ro',
+                data: [{{ age_risk }}, {{ bp_risk }}, {{ cholesterol_risk }}, {{ glucose_risk }}],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)', 
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Mức Độ Rủi Ro'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Các Yếu Tố Rủi Ro Bệnh Tim'
+                }
+            }
+        }
+    });
+</script>
+
+{% endblock body %}
