@@ -1,6 +1,0 @@
-patient_id,age,gender,chest_pain_type,resting_blood_pressure,cholesterol,max_heart_rate,exercise_angina,blood_sugar,diagnosis
-1,55,Male,1,140,230,150,0,0,1
-2,62,Female,3,160,280,130,1,1,0
-3,45,Male,2,130,250,140,0,0,1
-4,50,Female,4,120,180,155,0,1,0
-5,40,Male,3,135,210,165,0,0,1

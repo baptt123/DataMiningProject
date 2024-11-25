@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+
 {% block title %}Home{% endblock title %}
 
 {% block body %}
@@ -24,34 +25,30 @@
             <thead class="thead-dark">
                 <tr>
                     <th>No.</th>
-                    <th>Detail</th>
-                    <th>Full Name</th>
-                    <th>Email</th>
-                    <th>Birthdate</th>
+                    <th>Age</th>
                     <th>Gender</th>
-                    <th>Actions</th>
+                    <th>Chest Pain Type</th>
+                    <th>Resting Blood Pressure</th>
+                    <th>Cholesterol</th>
+                    <th>Max Heart Rate</th>
+                    <th>Exercise Angina</th>
+                    <th>Blood Sugar</th>
+                    <th>Diagnosis</th>
                 </tr>
             </thead>
             <tbody>
                 {% for record in data %}
                 <tr>
                     <td>{{ loop.index }}</td>
-                    <td>
-                        <button class="btn btn-info btn-sm">Details</button>
-                    </td>
-                    <td>{{ record.full_name }}</td>
-                    <td>{{ record.email }}</td>
-                    <td>{{ record.birthdate }}</td>
-                    <td>
-                        <span class="badge {% if record.gender == 'Female' %}badge-pink{% else %}badge-blue{% endif %}">
-                            {{ record.gender }}
-                        </span>
-                    </td>
-                    <td>
-                        <button class="btn btn-success btn-sm">View</button>
-                        <button class="btn btn-primary btn-sm">Edit</button>
-                        <button class="btn btn-danger btn-sm">Delete</button>
-                    </td>
+                    <td>{{ record[0] }}</td>
+                    <td>{{ record[1] }}</td>
+                    <td>{{ record[2] }}</td>
+                    <td>{{ record[3] }}</td>
+                    <td>{{ record[4] }}</td>
+                    <td>{{ record[5] }}</td>
+                    <td>{{ record[6] }}</td>
+                    <td>{{ record[7] }}</td>
+                    <td>{{ record[8] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -1,111 +1,131 @@
 {% extends "layout.html" %}
 {% block title %}Individual Test{% endblock title %}
 {% block body %}
-<!-- Page Header-->
-<head>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/individual.css') }}">
-</head>
-<header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/heart18.jpg') }}')">
-    <div class="container position-relative px-4 px-lg-5">
-        <div class="row gx-4 gx-lg-5 justify-content-center">
-            <div class="col-md-10 col-lg-8 col-xl-7">
-                <div class="post-heading">
-                    <h1>Predict the Health For Your Heart!</h1>
-                    <h2 class="subheading">By giving input of 8 features...</h2>
+    <!-- Page Header-->
+    <head>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/individual.css') }}">
+    </head>
+    <header class="masthead"
+            style="background-image: url('{{ url_for('static', filename='assets/img/heart18.jpg') }}')">
+        <div class="container position-relative px-4 px-lg-5">
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-md-10 col-lg-8 col-xl-7">
+                    <div class="post-heading">
+                        <h1>Predict the Health For Your Heart!</h1>
+                        <h2 class="subheading">By giving input of 8 features...</h2>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</header>
-<!-- Main Content-->
-<main class="mb-4">
-    <div class="container px-4 px-lg-5">
-        <div class="row gx-4 gx-lg-5 justify-content-center">
-            <div class="col-md-10 col-lg-8 col-xl-7">
-                <p>Fill out the details below to predict the chances of heart failure or disease.</p>
-                <div class="my-5">
-                    <form action="#" method="post" class="indi">
-                        <div class="form-floating">
+    </header>
+    <!-- Main Content-->
+    <main class="mb-4">
+        <div class="container px-4 px-lg-5">
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-md-10 col-lg-8 col-xl-7">
+                    <p>Fill out the details below to predict the chances of heart failure or disease.</p>
+                    <div class="my-5">
+                        <form action="{{ url_for('predict_heart') }}" method="post" class="indi">
+                            <div class="form-floating">
 
-                            <!-- Patient ID -->
-                            <div class="mb-3 row">
-                                <label for="patient_id" class="form-label">Patient ID:</label>
-                                <div class="col-sm-10">
-                                    <input type="text" id="patient_id" name="patient_id" placeholder="Enter Patient ID" class="form-control" required>
+                                <!-- Patient ID -->
+                                {#                            <div class="mb-3 row">#}
+                                {#                                <label for="patient_id" class="form-label">Patient ID:</label>#}
+                                {#                                <div class="col-sm-10">#}
+                                {#                                    <input type="text" id="patient_id" name="patient_id" placeholder="Enter Patient ID" class="form-control" required>#}
+                                {#                                </div>#}
+                                {#                            </div>#}
+                                <!-- Age -->
+                                <div class="mb-3 row">
+                                    <label for="age" class="form-label">Age:</label>
+                                    <div class="col-sm-10">
+                                        <input type="number" id="age" name="age" placeholder="Enter Age"
+                                               class="form-control" required>
+                                    </div>
+                                </div>
+                                <!-- Gender -->
+                                <div class="mb-3 row">
+                                    <label for="gender" class="form-label">Gender:</label>
+                                    <div class="col-sm-10">
+                                        <select name="gender" id="gender" class="form-control" required>
+                                            {#                                        <option value="">Not Selected</option>#}
+                                            <option value="M">M</option>
+                                            <option value="F">F</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- Chest Pain Type -->
+                                <div class="mb-3 row">
+                                    <label for="chest_pain_type" class="form-label">Chest Pain Type:</label>
+                                    <div class="col-sm-10">
+                                        {#                                    <input type="text" id="chest_pain_type" name="chest_pain_type" placeholder="Enter Chest Pain Type (e.g., 0-3)" class="form-control" required>#}
+                                        <select name="chest_pain_type" id="gender" class="form-control" required>
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- Resting Blood Pressure -->
+                                <div class="mb-3 row">
+                                    <label for="resting_blood_pressure" class="form-label">Resting Blood
+                                        Pressure:</label>
+                                    <div class="col-sm-10">
+                                        <input type="number" id="resting_blood_pressure" name="resting_blood_pressure"
+                                               placeholder="Enter Resting Blood Pressure" class="form-control" required>
+                                    </div>
+                                </div>
+                                <!-- Cholesterol -->
+                                <div class="mb-3 row">
+                                    <label for="cholesterol" class="form-label">Cholesterol:</label>
+                                    <div class="col-sm-10">
+                                        <input type="number" id="cholesterol" name="cholesterol"
+                                               placeholder="Enter Cholesterol Level" class="form-control" required>
+                                    </div>
+                                </div>
+                                <!-- Maximum Heart Rate -->
+                                <div class="mb-3 row">
+                                    <label for="max_heart_rate" class="form-label">Maximum Heart Rate:</label>
+                                    <div class="col-sm-10">
+                                        <input type="number" id="max_heart_rate" name="max_heart_rate"
+                                               placeholder="Enter Maximum Heart Rate" class="form-control" required>
+                                    </div>
+                                </div>
+                                <!-- Exercise Induced Angina -->
+                                <div class="mb-3 row">
+                                    <label for="exercise_angina" class="form-label">Exercise Induced Angina:</label>
+                                    <div class="col-sm-10">
+                                        <select name="exercise_angina" id="exercise_angina" class="form-control"
+                                                required>
+{#                                            <option value="">Not Selected</option>#}
+                                            <option value="N">N</option>
+                                            <option value="Y">Y</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- Blood Sugar -->
+                                <div class="mb-3 row">
+                                    <label for="blood_sugar" class="form-label">Blood Sugar:</label>
+                                    <div class="col-sm-10">
+{#                                        <input type="number" id="blood_sugar" name="blood_sugar"#}
+{#                                               placeholder="Enter Blood Sugar Level" class="form-control" required>#}
+                                           <select name="blood_sugar" id="blood_sugar" class="form-control"
+                                                required>
+{#                                            <option value="">Not Selected</option>#}
+                                            <option value="1">1</option>
+                                            <option value="0">0</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
-                            <!-- Age -->
-                            <div class="mb-3 row">
-                                <label for="age" class="form-label">Age:</label>
-                                <div class="col-sm-10">
-                                    <input type="text" id="age" name="age" placeholder="Enter Age" class="form-control" required>
-                                </div>
-                            </div>
-                            <!-- Gender -->
-                            <div class="mb-3 row">
-                                <label for="gender" class="form-label">Gender:</label>
-                                <div class="col-sm-7">
-                                    <select name="gender" id="gender" class="form-control" required>
-                                        <option value="">Not Selected</option>
-                                        <option value="1">Male</option>
-                                        <option value="0">Female</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <!-- Chest Pain Type -->
-                            <div class="mb-3 row">
-                                <label for="chest_pain_type" class="form-label">Chest Pain Type:</label>
-                                <div class="col-sm-10">
-                                    <input type="text" id="chest_pain_type" name="chest_pain_type" placeholder="Enter Chest Pain Type (e.g., 0-3)" class="form-control" required>
-                                </div>
-                            </div>
-                            <!-- Resting Blood Pressure -->
-                            <div class="mb-3 row">
-                                <label for="resting_blood_pressure" class="form-label">Resting Blood Pressure:</label>
-                                <div class="col-sm-10">
-                                    <input type="text" id="resting_blood_pressure" name="resting_blood_pressure" placeholder="Enter Resting Blood Pressure" class="form-control" required>
-                                </div>
-                            </div>
-                            <!-- Cholesterol -->
-                            <div class="mb-3 row">
-                                <label for="cholesterol" class="form-label">Cholesterol:</label>
-                                <div class="col-sm-10">
-                                    <input type="text" id="cholesterol" name="cholesterol" placeholder="Enter Cholesterol Level" class="form-control" required>
-                                </div>
-                            </div>
-                            <!-- Maximum Heart Rate -->
-                            <div class="mb-3 row">
-                                <label for="max_heart_rate" class="form-label">Maximum Heart Rate:</label>
-                                <div class="col-sm-10">
-                                    <input type="text" id="max_heart_rate" name="max_heart_rate" placeholder="Enter Maximum Heart Rate" class="form-control" required>
-                                </div>
-                            </div>
-                            <!-- Exercise Induced Angina -->
-                            <div class="mb-3 row">
-                                <label for="exercise_angina" class="form-label">Exercise Induced Angina:</label>
-                                <div class="col-sm-10">
-                                    <select name="exercise_angina" id="exercise_angina" class="form-control" required>
-                                        <option value="">Not Selected</option>
-                                        <option value="1">Yes</option>
-                                        <option value="0">No</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <!-- Blood Sugar -->
-                            <div class="mb-3 row">
-                                <label for="blood_sugar" class="form-label">Blood Sugar:</label>
-                                <div class="col-sm-10">
-                                    <input type="text" id="blood_sugar" name="blood_sugar" placeholder="Enter Blood Sugar Level" class="form-control" required>
-                                </div>
-                            </div>
-                        </div>
-                        <br>
-                        <button type="submit" class="btn btn-primary">Predict</button>
-                    </form>
+                            <br>
+                            <button type="submit" class="btn btn-primary">Predict</button>
+                        </form>
+                    </div>
+                    <br><br>
                 </div>
-                <br><br>
             </div>
         </div>
-    </div>
-</main>
+    </main>
 {% endblock %}

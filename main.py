@@ -1,15 +1,22 @@
 import os
 
+import joblib
+import pandas as pd
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import mysql.connector
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Thay bằng một chuỗi bí mật để dùng với session
-
+model=joblib.load('naive_bayes_model.pkl')
+# Khởi tạo mô hình Naive Bayes
+model_test = GaussianNB()
 # Routes for each HTML page
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('login.html')
 
 @app.route('/about')
 def about():
@@ -17,7 +24,45 @@ def about():
 
 @app.route('/chart')
 def chart():
-    return render_template('chart.html')
+    # Kết nối tới database
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
+    # Truy vấn dữ liệu bệnh tim
+    cursor.execute("""
+         SELECT diagnosis, COUNT(*) 
+         FROM patients_data_mining
+         GROUP BY diagnosis
+     """)
+    heart_disease_data = cursor.fetchall()
+
+    # Truy vấn các yếu tố rủi ro (Ví dụ: tuổi, huyết áp, cholesterol, đường huyết)
+    cursor.execute("""
+         SELECT AVG(age), AVG(resting_blood_pressure), AVG(cholesterol), AVG(blood_sugar)
+         FROM patients_data_mining
+     """)
+    risk_factors_data = cursor.fetchall()
+
+    # Đóng kết nối
+    conn.close()
+
+    # Tính toán tỷ lệ bệnh tim
+    heart_disease_positive = heart_disease_data[0][1] if len(heart_disease_data) > 0 else 0
+    heart_disease_negative = heart_disease_data[1][1] if len(heart_disease_data) > 1 else 0
+
+    # Tính toán các yếu tố rủi ro (Ví dụ: tuổi, huyết áp, cholesterol, đường huyết)
+    age_risk = risk_factors_data[0][0]
+    bp_risk = risk_factors_data[0][1]
+    cholesterol_risk = risk_factors_data[0][2]
+    glucose_risk = risk_factors_data[0][3]
+
+    # Trả về dữ liệu cho template
+    return render_template('chart.html',
+                           heart_disease_positive=heart_disease_positive,
+                           heart_disease_negative=heart_disease_negative,
+                           age_risk=age_risk,
+                           bp_risk=bp_risk,
+                           cholesterol_risk=cholesterol_risk,
+                           glucose_risk=glucose_risk)
 
 @app.route('/contact')
 def contact():
@@ -29,7 +74,32 @@ def copy():
 
 @app.route('/datapatient')
 def datapatient():
-    return render_template('datapatient.html')
+    # Kết nối tới database
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
+
+    # Truy vấn dữ liệu từ database
+    query = """
+        SELECT age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
+               max_heart_rate, exercise_angina, blood_sugar, diagnosis
+        FROM patients_data_mining
+    """
+    cursor.execute(query)
+
+    # Lấy dữ liệu từ kết quả truy vấn
+    data = cursor.fetchall()
+
+    # Đóng kết nối
+    conn.close()
+
+    # Cung cấp params vào context
+    params = {
+        'blog_name': 'Heart Failure Prediction System'
+    }
+
+    # Trả về template và truyền dữ liệu vào template
+    return render_template('datapatient.html', data=data, params=params)
+
 
 @app.route('/dataset_test')
 def dataset_test():
@@ -52,7 +122,7 @@ def layout():
     return render_template('layout.html')
 
 @app.route('/login', methods=['GET', 'POST'])
-def login_page():
+def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -86,7 +156,7 @@ def login_page():
 def register():
     if request.method == 'POST':
         # Lấy dữ liệu từ form
-        avatar = request.files['avatar']
+        # avatar = request.files['avatar']
         username = request.form['username']
         password = request.form['password']
         confirm_password = request.form['confirm_password']
@@ -113,18 +183,18 @@ def register():
             return redirect(url_for('register'))
 
         # Lưu file avatar
-        if avatar.filename != '':
-            avatar_path = os.path.join('static/uploads', avatar.filename)
-            avatar.save(avatar_path)
-        else:
-            avatar_path = None
+        # if avatar.filename != '':
+        #     avatar_path = os.path.join('static/uploads', avatar.filename)
+        #     avatar.save(avatar_path)
+        # else:
+        #     avatar_path = None
 
         # Thêm thông tin người dùng vào database
         insert_query = """
-        INSERT INTO users (username, password, avatar_path)
-        VALUES (%s, %s, %s)
+        INSERT INTO users (username, password)
+        VALUES (%s, %s)
         """
-        cursor.execute(insert_query, (username, password, avatar_path))
+        cursor.execute(insert_query, (username, password))
         conn.commit()
 
         cursor.close()
@@ -145,15 +215,186 @@ def logout():
     session.pop('username', None)
     flash('Bạn đã đăng xuất', 'info')
     return redirect(url_for('login_page'))
-
+@app.route('/test_export_pdf')
+def test_export_pdf():
+    return render_template('test_export_pdf.html')
 # Cấu hình kết nối MySQL
 db_config = {
     'host': 'localhost',
-    'user': 'your_username',  # Thay bằng username MySQL của bạn
-    'password': 'your_password',  # Thay bằng password MySQL của bạn
-    'database': 'your_database',  # Thay bằng tên database của bạn
+    'user': 'root',  # Thay bằng username MySQL của bạn
+    'password': '',  # Thay bằng password MySQL của bạn
+    'database': 'data mining project',  # Thay bằng tên database của bạn
 }
 
-# Run the Flask app
+
+# Hàm kết nối và lưu dữ liệu vào MySQL
+def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol, max_heart_rate, exercise_angina,
+               blood_sugar, diagnosis):
+    try:
+        # Kết nối tới cơ sở dữ liệu MySQL
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+
+        # Câu lệnh SQL để lưu dữ liệu vào bảng
+        query = """
+        INSERT INTO patients_data_mining
+         (age, gender, chest_pain_type, resting_blood_pressure, cholesterol, 
+                                                max_heart_rate, exercise_angina, blood_sugar, diagnosis)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        values = (
+        age, gender, chest_pain_type, resting_blood_pressure, cholesterol, max_heart_rate, exercise_angina, blood_sugar,
+        diagnosis)
+
+        # Thực thi câu lệnh SQL
+        cursor.execute(query, values)
+
+        # Commit để lưu thay đổi vào cơ sở dữ liệu
+        conn.commit()
+
+        print("Dữ liệu đã được lưu vào cơ sở dữ liệu")
+
+    except mysql.connector.Error as err:
+        print(f"Lỗi: {err}")
+    finally:
+        # Đóng kết nối
+        cursor.close()
+        conn.close()
+
+
+# Hàm lấy dữ liệu từ cơ sở dữ liệu
+def load_data_from_db():
+    try:
+        # Kết nối tới cơ sở dữ liệu MySQL
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+
+        # Câu lệnh SQL để lấy tất cả dữ liệu từ bảng
+        query = """
+        SELECT age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
+               max_heart_rate, exercise_angina, blood_sugar, diagnosis
+        FROM patients_data_mining
+        """
+
+        # Thực thi câu lệnh SQL
+        cursor.execute(query)
+
+        # Lấy tất cả dữ liệu và chuyển đổi thành DataFrame
+        result = cursor.fetchall()
+
+        # Tạo DataFrame từ dữ liệu lấy ra
+        data = pd.DataFrame(result,
+                            columns=['age', 'gender', 'chest_pain_type', 'resting_blood_pressure', 'cholesterol',
+                                     'max_heart_rate', 'exercise_angina', 'blood_sugar', 'diagnosis'])
+
+        return data
+
+    except mysql.connector.Error as err:
+        print(f"Lỗi: {err}")
+        return None
+    finally:
+        # Đóng kết nối
+        cursor.close()
+        conn.close()
+
+
+@app.route('/predict_heart', methods=['GET', 'POST'])
+def predict_heart():
+    if request.method == 'POST':
+        try:
+            # Lấy dữ liệu từ form
+            age = int(request.form['age'])
+            gender = request.form['gender']
+            chest_pain_type = int(request.form['chest_pain_type'])
+            resting_blood_pressure = int(request.form['resting_blood_pressure'])
+            cholesterol = int(request.form['cholesterol'])
+            max_heart_rate = int(request.form['max_heart_rate'])
+            exercise_angina = request.form['exercise_angina']
+            blood_sugar = int(request.form['blood_sugar'])
+
+            # Mã hóa các thuộc tính cần thiết
+            gender_encoded = 1 if gender == 'M' else 0
+            exercise_angina_encoded = 1 if exercise_angina == 'Y' else 0
+
+            # Lấy toàn bộ dữ liệu từ DB để huấn luyện lại mô hình
+            data = load_data_from_db()
+
+            if data is None:
+                raise Exception("Không thể tải dữ liệu từ cơ sở dữ liệu")
+
+            # Tiền xử lý dữ liệu từ DB
+            data['gender'] = data['gender'].map({'M': 1, 'F': 0})
+            data['exercise_angina'] = data['exercise_angina'].map({'Y': 1, 'N': 0})
+
+            # Đảm bảo rằng dữ liệu từ form cũng được chuẩn hóa tương tự
+            features = pd.DataFrame([[age, gender_encoded, chest_pain_type, resting_blood_pressure,
+                                      cholesterol, max_heart_rate, exercise_angina_encoded, blood_sugar]],
+                                    columns=['age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
+                                             'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar'])
+
+            # Dự đoán kết quả
+            prediction = model.predict(features)[0]
+            result = 1 if prediction == 1 else 0
+
+            # Lưu kết quả xuống cơ sở dữ liệu
+            save_to_db(
+                age=age,
+                gender=gender,
+                chest_pain_type=chest_pain_type,
+                resting_blood_pressure=resting_blood_pressure,
+                cholesterol=cholesterol,
+                max_heart_rate=max_heart_rate,
+                exercise_angina=exercise_angina,
+                blood_sugar=blood_sugar,
+                diagnosis=result
+            )
+
+            # Huấn luyện lại mô hình với dữ liệu mới từ DB
+            train_model(data)
+
+            # Trả kết quả về giao diện
+            return f"""
+                <h1>Kết quả chẩn đoán: {'Có bệnh' if result == 1 else 'Không bệnh'}</h1>
+                <a href="/">Quay lại</a>
+            """
+
+        except Exception as e:
+            # Xử lý lỗi và in ra thông báo
+            return f"""
+                <h1>Đã xảy ra lỗi trong quá trình xử lý: {e}</h1>
+                <a href="/">Quay lại</a>
+            """
+
+    # Nếu phương thức là GET, hiển thị form
+    return render_template('Individual-Test.html')
+
+
+# Hàm huấn luyện mô hình Naive Bayes
+def train_model(data):
+    try:
+        # Chuẩn bị dữ liệu: Lấy các đặc trưng và nhãn
+        X = data[['age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
+                  'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar']]
+        y = data['diagnosis']  # Cột nhãn (diagnosis)
+
+        # Chia dữ liệu thành tập huấn luyện và kiểm tra
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        # Huấn luyện mô hình Naive Bayes
+        model_test.fit(X_train, y_train)
+
+        # Dự đoán trên tập kiểm tra
+        y_pred = model_test.predict(X_test)
+
+        # Tính toán độ chính xác của mô hình
+        accuracy = accuracy_score(y_test, y_pred)
+        print(f"Accuracy of the Naive Bayes model: {accuracy:.2f}")
+
+    except Exception as e:
+        print(f"Lỗi khi huấn luyện mô hình: {e}")
+
+# Chạy ứng dụng Flask
 if __name__ == '__main__':
     app.run(debug=True)
+
+
