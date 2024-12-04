@@ -1,25 +1,25 @@
 {% extends "layout.html" %}
-{% block title %}Chẩn Đoán Bệnh Tim Bằng Naive Bayes{% endblock title %}
+{% block title %}Chẩn Đoán Bệnh Tim Bằng Random Forest{% endblock title %}
 {% block body %}
 <div class="container mt-5">
     <div class="row">
         <div class="col-lg-8 offset-lg-2">
             <div class="card shadow-lg">
                 <div class="card-header bg-primary text-white">
-                    <h2 class="text-center">Chẩn Đoán Bệnh Tim Sử Dụng Thuật Toán Naive Bayes</h2>
+                    <h2 class="text-center">Chẩn Đoán Bệnh Tim Sử Dụng Thuật Toán Random Forest</h2>
                 </div>
                 <div class="card-body">
                     <section class="mb-4">
-                        <h3>Giới Thiệu Thuật Toán Naive Bayes</h3>
-                        <p>Naive Bayes là một thuật toán phân loại xác suất dựa trên định lý Bayes, được sử dụng trong việc chẩn đoán bệnh tim. Thuật toán này hoạt động dựa trên nguyên tắc tính toán xác suất của từng đặc điểm.</p>
+                        <h3>Giới Thiệu Thuật Toán Random Forest</h3>
+                        <p>Random Forest là một thuật toán học máy mạnh mẽ, sử dụng nhiều cây quyết định để phân loại dữ liệu. Thuật toán này giúp dự đoán bệnh tim dựa trên các đặc điểm của bệnh nhân bằng cách tính toán kết quả từ nhiều cây quyết định khác nhau.</p>
                     </section>
 
                     <section class="mb-4">
                         <h3>Nguyên Lý Hoạt Động</h3>
                         <ul>
-                            <li>Tính toán xác suất xuất hiện của mỗi đặc điểm</li>
-                            <li>Độc lập hóa các đặc điểm (giả định Naive)</li>
-                            <li>Tính toán xác suất cuối cùng cho việc chẩn đoán</li>
+                            <li>Chọn ngẫu nhiên các đặc điểm từ dữ liệu</li>
+                            <li>Huấn luyện nhiều cây quyết định trên các tập con dữ liệu khác nhau</li>
+                            <li>Đưa ra dự đoán bằng cách kết hợp kết quả từ các cây quyết định</li>
                         </ul>
                     </section>
 

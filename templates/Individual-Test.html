@@ -1,295 +1,268 @@
-{#{% extends "layout.html" %}#}
-{#{% block title %}Individual Test{% endblock title %}#}
-{#{% block body %}#}
-{#    <!-- Page Header-->#}
-{#    <head>#}
-{#        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/individual.css') }}">#}
-{#    </head>#}
-{#    <header class="masthead"#}
-{#            style="background-image: url('{{ url_for('static', filename='assets/img/heart18.jpg') }}')">#}
-{#        <div class="container position-relative px-4 px-lg-5">#}
-{#            <div class="row gx-4 gx-lg-5 justify-content-center">#}
-{#                <div class="col-md-10 col-lg-8 col-xl-7">#}
-{#                    <div class="post-heading">#}
-{#                        <h1>Predict the Health For Your Heart!</h1>#}
-{#                        <h2 class="subheading">By giving input of 8 features...</h2>#}
-{#                    </div>#}
-{#                </div>#}
-{#            </div>#}
-{#        </div>#}
-{#    </header>#}
-{#    <!-- Main Content-->#}
-{#    <main class="mb-4">#}
-{#        <div class="container px-4 px-lg-5">#}
-{#            <div class="row gx-4 gx-lg-5 justify-content-center">#}
-{#                <div class="col-md-10 col-lg-8 col-xl-7">#}
-{#                    <p>Fill out the details below to predict the chances of heart failure or disease.</p>#}
-{#                    <div class="my-5">#}
-{#                        <form action="{{ url_for('predict_heart') }}" method="post" class="indi">#}
-{#                            <div class="form-floating">#}
-{##}
-{#                                <!-- Patient ID -->#}
-                                {#                            <div class="mb-3 row">#}
-                                {#                                <label for="patient_id" class="form-label">Patient ID:</label>#}
-                                {#                                <div class="col-sm-10">#}
-                                {#                                    <input type="text" id="patient_id" name="patient_id" placeholder="Enter Patient ID" class="form-control" required>#}
-                                {#                                </div>#}
-                                {#                            </div>#}
-{#                                <!-- Age -->#}
-{#                                <div class="mb-3 row">#}
-{#                                    <label for="age" class="form-label">Age:</label>#}
-{#                                    <div class="col-sm-10">#}
-{#                                        <input type="number" id="age" name="age" placeholder="Enter Age"#}
-{#                                               class="form-control" required>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                                <!-- Gender -->#}
-{#                                <div class="mb-3 row">#}
-{#                                    <label for="gender" class="form-label">Gender:</label>#}
-{#                                    <div class="col-sm-10">#}
-{#                                        <select name="gender" id="gender" class="form-control" required>#}
-                                            {#                                        <option value="">Not Selected</option>#}
-{#                                            <option value="M">M</option>#}
-{#                                            <option value="F">F</option>#}
-{#                                        </select>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                                <!-- Chest Pain Type -->#}
-{#                                <div class="mb-3 row">#}
-{#                                    <label for="chest_pain_type" class="form-label">Chest Pain Type:</label>#}
-{#                                    <div class="col-sm-10">#}
-                                        {#                                    <input type="text" id="chest_pain_type" name="chest_pain_type" placeholder="Enter Chest Pain Type (e.g., 0-3)" class="form-control" required>#}
-{#                                        <select name="chest_pain_type" id="gender" class="form-control" required>#}
-{#                                            <option value="1">1</option>#}
-{#                                            <option value="2">2</option>#}
-{#                                            <option value="3">3</option>#}
-{#                                            <option value="4">4</option>#}
-{#                                        </select>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                                <!-- Resting Blood Pressure -->#}
-{#                                <div class="mb-3 row">#}
-{#                                    <label for="resting_blood_pressure" class="form-label">Resting Blood#}
-{#                                        Pressure:</label>#}
-{#                                    <div class="col-sm-10">#}
-{#                                        <input type="number" id="resting_blood_pressure" name="resting_blood_pressure"#}
-{#                                               placeholder="Enter Resting Blood Pressure" class="form-control" required>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                                <!-- Cholesterol -->#}
-{#                                <div class="mb-3 row">#}
-{#                                    <label for="cholesterol" class="form-label">Cholesterol:</label>#}
-{#                                    <div class="col-sm-10">#}
-{#                                        <input type="number" id="cholesterol" name="cholesterol"#}
-{#                                               placeholder="Enter Cholesterol Level" class="form-control" required>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                                <!-- Maximum Heart Rate -->#}
-{#                                <div class="mb-3 row">#}
-{#                                    <label for="max_heart_rate" class="form-label">Maximum Heart Rate:</label>#}
-{#                                    <div class="col-sm-10">#}
-{#                                        <input type="number" id="max_heart_rate" name="max_heart_rate"#}
-{#                                               placeholder="Enter Maximum Heart Rate" class="form-control" required>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                                <!-- Exercise Induced Angina -->#}
-{#                                <div class="mb-3 row">#}
-{#                                    <label for="exercise_angina" class="form-label">Exercise Induced Angina:</label>#}
-{#                                    <div class="col-sm-10">#}
-{#                                        <select name="exercise_angina" id="exercise_angina" class="form-control"#}
-{#                                                required>#}
-{#                                            <option value="">Not Selected</option>#}
-{#                                            <option value="N">N</option>#}
-{#                                            <option value="Y">Y</option>#}
-{#                                        </select>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                                <!-- Blood Sugar -->#}
-{#                                <div class="mb-3 row">#}
-{#                                    <label for="blood_sugar" class="form-label">Blood Sugar:</label>#}
-{#                                    <div class="col-sm-10">#}
-{#                                        <input type="number" id="blood_sugar" name="blood_sugar"#}
-{#                                               placeholder="Enter Blood Sugar Level" class="form-control" required>#}
-{#                                           <select name="blood_sugar" id="blood_sugar" class="form-control"#}
-{#                                                required>#}
-{#                                            <option value="">Not Selected</option>#}
-{#                                            <option value="1">1</option>#}
-{#                                            <option value="0">0</option>#}
-{#                                        </select>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                            </div>#}
-{#                            <br>#}
-{#                            <button type="submit" class="btn btn-primary">Predict</button>#}
-{#                        </form>#}
-{#                    </div>#}
-{#                    <br><br>#}
-{#                </div>#}
-{#            </div>#}
-{#        </div>#}
-{#    </main>#}
-{#{% endblock %}#}
 {% extends "layout.html" %}
-{% block title %}Individual Test{% endblock title %}
+{% block title %}Dự Đoán Nguy Cơ Bệnh Tim{% endblock %}
+
 {% block body %}
-    <!-- Page Header-->
-    <head>
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/individual.css') }}">
-        <script>
-            // Hàm kiểm tra dữ liệu đầu vào
-            function validateForm() {
-                // Kiểm tra Tuổi (Age)
-                var age = document.getElementById("age").value;
-                if (age < 40 || age > 70) {
-                    alert("Tuổi bệnh nhân phải từ 40 đến 70.");
-                    return false;
-                }
+<div class="heart-prediction-container">
+    <div class="background-overlay"></div>
 
-                // Kiểm tra Huyết áp khi nghỉ ngơi (Resting Blood Pressure)
-                var restingBloodPressure = document.getElementById("resting_blood_pressure").value;
-                if (restingBloodPressure < 90 || restingBloodPressure > 200) {
-                    alert("Huyết áp khi nghỉ ngơi phải trong khoảng từ 90 đến 200 mmHg.");
-                    return false;
-                }
-
-                // Kiểm tra Cholesterol
-                var cholesterol = document.getElementById("cholesterol").value;
-                if (cholesterol < 200) {
-                    alert("Cholesterol phải cao hơn 200 mg/dL cho bệnh nhân mắc bệnh tim.");
-                    return false;
-                }
-
-                // Kiểm tra Nhịp tim tối đa (Max Heart Rate)
-                var maxHeartRate = document.getElementById("max_heart_rate").value;
-                if (maxHeartRate < 100 || maxHeartRate > 180) {
-                    alert("Nhịp tim tối đa phải trong khoảng từ 100 đến 180 bpm cho bệnh nhân có nguy cơ bệnh tim.");
-                    return false;
-                }
-
-                // Kiểm tra Cơn đau thắt ngực khi tập thể dục (Exercise Angina)
-                var exerciseAngina = document.getElementById("exercise_angina").value;
-                if (exerciseAngina !== "Y" && exerciseAngina !== "N") {
-                    alert("Cơn đau thắt ngực khi tập thể dục phải là Y (Có) hoặc N (Không).");
-                    return false;
-                }
-
-                // Kiểm tra Đường huyết (Blood Sugar)
-                var bloodSugar = document.getElementById("blood_sugar").value;
-                if (bloodSugar !== "0" && bloodSugar !== "1") {
-                    alert("Đường huyết phải là 0 (Bình thường) hoặc 1 (Cao).");
-                    return false;
-                }
-
-                // Nếu tất cả đều hợp lệ, cho phép gửi form
-                return true;
-            }
-        </script>
-    </head>
-    <header class="masthead"
-            style="background-image: url('{{ url_for('static', filename='assets/img/heart18.jpg') }}')">
-        <div class="container position-relative px-4 px-lg-5">
-            <div class="row gx-4 gx-lg-5 justify-content-center">
-                <div class="col-md-10 col-lg-8 col-xl-7">
-                    <div class="post-heading">
-                        <h1>Predict the Health For Your Heart!</h1>
-                        <h2 class="subheading">By giving input of 8 features...</h2>
-                    </div>
-                </div>
+    <div class="container">
+        <div class="prediction-wrapper">
+            <div class="prediction-header text-center">
+                <h1 class="display-4 text-primary">
+                    <i class="fas fa-heartbeat"></i> Đánh Giá Nguy Cơ Bệnh Tim
+                </h1>
+                <p class="lead text-muted">
+                    Nhập thông tin chi tiết để được đánh giá sức khỏe tim mạch
+                </p>
             </div>
-        </div>
-    </header>
-    <!-- Main Content-->
-    <main class="mb-4">
-        <div class="container px-4 px-lg-5">
-            <div class="row gx-4 gx-lg-5 justify-content-center">
-                <div class="col-md-10 col-lg-8 col-xl-7">
-                    <p>Fill out the details below to predict the chances of heart failure or disease.</p>
-                    <div class="my-5">
-                        <form action="{{ url_for('predict_heart') }}" method="post" class="indi" onsubmit="return validateForm()">
-                            <div class="form-floating">
-                                <!-- Age -->
-                                <div class="mb-3 row">
-                                    <label for="age" class="form-label">Age:</label>
-                                    <div class="col-sm-10">
-                                        <input type="number" id="age" name="age" placeholder="Enter Age"
-                                               class="form-control" required>
-                                    </div>
-                                </div>
-                                <!-- Gender -->
-                                <div class="mb-3 row">
-                                    <label for="gender" class="form-label">Gender:</label>
-                                    <div class="col-sm-10">
-                                        <select name="gender" id="gender" class="form-control" required>
-                                            <option value="M">M</option>
-                                            <option value="F">F</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <!-- Chest Pain Type -->
-                                <div class="mb-3 row">
-                                    <label for="chest_pain_type" class="form-label">Chest Pain Type:</label>
-                                    <div class="col-sm-10">
-                                        <select name="chest_pain_type" id="chest_pain_type" class="form-control" required>
-                                            <option value="1">1</option>
-                                            <option value="2">2</option>
-                                            <option value="3">3</option>
-                                            <option value="4">4</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <!-- Resting Blood Pressure -->
-                                <div class="mb-3 row">
-                                    <label for="resting_blood_pressure" class="form-label">Resting Blood Pressure:</label>
-                                    <div class="col-sm-10">
-                                        <input type="number" id="resting_blood_pressure" name="resting_blood_pressure"
-                                               placeholder="Enter Resting Blood Pressure" class="form-control" required>
-                                    </div>
-                                </div>
-                                <!-- Cholesterol -->
-                                <div class="mb-3 row">
-                                    <label for="cholesterol" class="form-label">Cholesterol:</label>
-                                    <div class="col-sm-10">
-                                        <input type="number" id="cholesterol" name="cholesterol"
-                                               placeholder="Enter Cholesterol Level" class="form-control" required>
-                                    </div>
-                                </div>
-                                <!-- Maximum Heart Rate -->
-                                <div class="mb-3 row">
-                                    <label for="max_heart_rate" class="form-label">Maximum Heart Rate:</label>
-                                    <div class="col-sm-10">
-                                        <input type="number" id="max_heart_rate" name="max_heart_rate"
-                                               placeholder="Enter Maximum Heart Rate" class="form-control" required>
-                                    </div>
-                                </div>
-                                <!-- Exercise Induced Angina -->
-                                <div class="mb-3 row">
-                                    <label for="exercise_angina" class="form-label">Exercise Induced Angina:</label>
-                                    <div class="col-sm-10">
-                                        <select name="exercise_angina" id="exercise_angina" class="form-control"
-                                                required>
-                                            <option value="N">N</option>
-                                            <option value="Y">Y</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <!-- Blood Sugar -->
-                                <div class="mb-3 row">
-                                    <label for="blood_sugar" class="form-label">Blood Sugar:</label>
-                                    <div class="col-sm-10">
-                                        <select name="blood_sugar" id="blood_sugar" class="form-control" required>
-                                            <option value="1">1</option>
-                                            <option value="0">0</option>
-                                        </select>
-                                    </div>
-                                </div>
+
+            <form action="{{ url_for('predict_heart') }}"
+                  method="post"
+                  class="prediction-form"
+                  onsubmit="return validateForm()">
+
+                <div class="row">
+                    <!-- Cột trái -->
+                    <div class="col-md-6">
+                        <!-- Tuổi -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Tuổi</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-birthday-cake"></i></span>
+                                <input type="number"
+                                       name="age"
+                                       id="age"
+                                       class="form-control"
+                                       placeholder="Nhập tuổi"
+                                       min="20"
+                                       max="80"
+                                       required>
                             </div>
-                            <br>
-                            <button type="submit" class="btn btn-primary">Predict</button>
-                        </form>
+                        </div>
+
+                        <!-- Giới tính -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Giới Tính</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-venus-mars"></i></span>
+                                <select name="sex"
+                                        class="form-control"
+                                        required>
+                                    <option value="1">Nam</option>
+                                    <option value="0">Nữ</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Loại Đau Ngực -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Loại Đau Ngực</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-notes-medical"></i></span>
+                                <select name="chest_pain_type"
+                                        class="form-control"
+                                        required>
+                                    <option value="1">Đau kiểu 1</option>
+                                    <option value="2">Đau kiểu 2</option>
+                                    <option value="3">Đau kiểu 3</option>
+                                    <option value="4">Đau kiểu 4</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Đường Huyết Cao -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Đường Huyết Cao</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-sugar-cube"></i></span>
+                                <select name="fasting_blood_sugar"
+                                        class="form-control"
+                                        required>
+                                    <option value="1">Có</option>
+                                    <option value="0">Không</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <br><br>
+
+                    <!-- Cột phải -->
+                    <div class="col-md-6">
+                        <!-- Huyết Áp -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Huyết Áp (mmHg)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-tachometer-alt"></i></span>
+                                <input type="number"
+                                       name="resting_bp"
+                                       id="resting_bp"
+                                       class="form-control"
+                                       placeholder="Nhập huyết áp"
+                                       min="90"
+                                       max="200"
+                                       required>
+                            </div>
+                        </div>
+
+                        <!-- Cholesterol -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Cholesterol (mg/dL)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-chart-line"></i></span>
+                                <input type="number"
+                                       name="cholesterol"
+                                       id="cholesterol"
+                                       class="form-control"
+                                       placeholder="Nhập cholesterol"
+                                       min="120"
+                                       max="400"
+                                       required>
+                            </div>
+                        </div>
+
+                        <!-- Nhịp Tim Lúc Nghỉ -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Nhịp Tim Lúc Nghỉ</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-heartbeat"></i></span>
+                                <input type="number"
+                                       name="resting_ecg"
+                                       id="resting_ecg"
+                                       class="form-control"
+                                       placeholder="Nhập nhịp tim"
+                                       required>
+                            </div>
+                        </div>
+
+                        <!-- Đau Thắt Ngực Khi Gắng Sức -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Đau Thắt Ngực Khi Gắng Sức</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-running"></i></span>
+                                <select name="exercise_angina"
+                                        class="form-control"
+                                        required>
+                                    <option value="1">Có</option>
+                                    <option value="0">Không</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Hàng cuối -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <!-- Nhịp Tim Tối Đa -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Nhịp Tim Tối Đa</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-heartbeat"></i></span>
+                                <input type="number"
+                                       name="max_hr"
+                                       id="max_hr"
+                                       class="form-control"
+                                       placeholder="Nhập nhịp tim tối đa"
+                                       min="60"
+                                       max="220"
+                                       required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <!-- Độ Dốc ST -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Độ Dốc ST</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-chart-area"></i></span>
+                                <input type="number"
+                                       name="oldpeak"
+                                       id="oldpeak"
+                                       class="form-control"
+                                       placeholder="Nhập độ dốc ST"
+                                       step="0.1"
+                                       required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nút Submit -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        <i class="fas fa-diagnoses me-2"></i>Kiểm Tra Nguy Cơ
+                    </button>
+                </div>
+            </form>
         </div>
-    </main>
+    </div>
+</div>
+
+<style>
+    .heart-prediction-container {
+        position: relative;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        display: flex;
+        align-items: center;
+        padding: 50px 0;
+    }
+
+    .background-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.7);
+        z-index: 1;
+    }
+
+    .prediction-wrapper {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        padding: 40px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .prediction-header {
+        margin-bottom: 30px;
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+    }
+</style>
+
+<script>
+    function validateForm() {
+        // Tuổi
+        var age = document.getElementById("age");
+        if (age.value < 20 || age.value > 80) {
+            alert("⚠️ Tuổi phải từ 20-80 tuổi!");
+            age.focus();
+            return false;
+        }
+
+        // Huyết áp
+        var restingBloodPressure = document.getElementById("resting_bp");
+        if (restingBloodPressure.value < 90 || restingBloodPressure.value > 200) {
+            alert("⚠️ Huyết áp phải từ 90-200 mmHg!");
+            restingBloodPressure.focus();
+            return false;
+        }
+
+        // Cholesterol
+        var cholesterol = document.getElementById("cholesterol");
+        if (cholesterol.value < 120 || cholesterol.value > 400) {
+            alert("⚠️ Cholesterol phải từ 120-400 mg/dL!");
+            cholesterol.focus();
+            return false;
+        }
+
+        return true;
+    }
+</script>
+
 {% endblock %}

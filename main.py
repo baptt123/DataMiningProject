@@ -4,6 +4,7 @@ import joblib
 import pandas as pd
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import mysql.connector
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
@@ -13,9 +14,9 @@ from sklearn.preprocessing import StandardScaler
 global model, scaler
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Thay bằng một chuỗi bí mật để dùng với session
-model=joblib.load('naive_bayes_model.pkl')
-# Khởi tạo mô hình Naive Bayes
-model_test = GaussianNB()
+# model=joblib.load('naive_bayes_model.pkl')
+# # Khởi tạo mô hình Naive Bayes
+# model_test = GaussianNB()
 # Routes for each HTML page
 @app.route('/')
 def index():
@@ -237,7 +238,6 @@ def preprocess_data(data):
     data['exercise_angina'] = data['exercise_angina'].map({'Y': 1, 'N': 0})
     return data
 
-
 def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
                max_heart_rate, exercise_angina, blood_sugar, diagnosis):
     """Lưu dữ liệu vào cơ sở dữ liệu"""
@@ -264,7 +264,6 @@ def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol
     finally:
         cursor.close()
         conn.close()
-
 
 def load_data_from_db():
     """Lấy dữ liệu từ cơ sở dữ liệu"""
@@ -296,11 +295,8 @@ def load_data_from_db():
         cursor.close()
         conn.close()
 
-
 def train_model(data):
-    """Huấn luyện mô hình Naive Bayes"""
-    global model, scaler
-
+    """Huấn luyện mô hình Random Forest"""
     try:
         # Tiền xử lý dữ liệu
         data = preprocess_data(data)
@@ -318,8 +314,8 @@ def train_model(data):
         X_train_scaled = scaler.fit_transform(X_train)
         X_test_scaled = scaler.transform(X_test)
 
-        # Huấn luyện mô hình Naive Bayes
-        model = GaussianNB()
+        # Huấn luyện mô hình Random Forest
+        model = RandomForestClassifier(n_estimators=100, random_state=42,max_depth=5,test_size=0.2)
         model.fit(X_train_scaled, y_train)
 
         # Dự đoán và đánh giá
@@ -330,19 +326,25 @@ def train_model(data):
         print("\nBáo cáo chi tiết:")
         print(classification_report(y_test, y_pred, zero_division=1))
 
+        # Lưu mô hình và scaler
+        os.makedirs('models', exist_ok=True)
+        joblib.dump(model, 'models/random_forest_model.joblib')
+        joblib.dump(scaler, 'models/scaler.joblib')
+
         return model, scaler
 
     except Exception as e:
         print(f"Lỗi khi huấn luyện mô hình: {e}")
         return None, None
 
-
 @app.route('/predict_heart', methods=['GET', 'POST'])
 def predict_heart():
-    global model, scaler
+    try:
+        # Tải mô hình và scaler
+        model = joblib.load('models/random_forest_model.joblib')
+        scaler = joblib.load('models/scaler.joblib')
 
-    if request.method == 'POST':
-        try:
+        if request.method == 'POST':
             # Lấy dữ liệu từ form
             age = int(request.form['age'])
             gender = request.form['gender']
@@ -396,25 +398,23 @@ def predict_heart():
                 <a href="/">Quay lại</a>
             """
 
-        except Exception as e:
-            return f"""
-                <h1>Đã xảy ra lỗi trong quá trình xử lý: {e}</h1>
-                <a href="/">Quay lại</a>
-            """
+    except Exception as e:
+        return f"""
+            <h1>Đã xảy ra lỗi trong quá trình xử lý: {e}</h1>
+            <a href="/">Quay lại</a>
+        """
 
     # Nếu phương thức là GET, hiển thị form
     return render_template('Individual-Test.html')
 
-
 # Khởi tạo mô hình ban đầu khi ứng dụng chạy
 def init_model():
-    global model, scaler
     data = load_data_from_db()
-    model, scaler = train_model(data)
-
+    train_model(data)
 
 # Gọi hàm khởi tạo mô hình
 init_model()
+
 # Chạy ứng dụng Flask
 if __name__ == '__main__':
     app.run(debug=True)
