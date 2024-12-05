@@ -245,13 +245,17 @@ def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
 
+        # Lấy giá trị ID lớn nhất hiện có và cộng thêm 1
+        cursor.execute("SELECT COALESCE(MAX(patient_id), 0) + 1 FROM patients_data_mining")
+        new_id = cursor.fetchone()[0]
+
         query = """
         INSERT INTO patients_data_mining 
-        (age, gender, chest_pain_type, resting_blood_pressure, cholesterol, 
+        (patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol, 
          max_heart_rate, exercise_angina, blood_sugar, diagnosis)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        values = (age, gender, chest_pain_type, resting_blood_pressure,
+        values = (new_id, age, gender, chest_pain_type, resting_blood_pressure,
                   cholesterol, max_heart_rate, exercise_angina,
                   blood_sugar, diagnosis)
 
@@ -315,7 +319,7 @@ def train_model(data):
         X_test_scaled = scaler.transform(X_test)
 
         # Huấn luyện mô hình Random Forest
-        model = RandomForestClassifier(n_estimators=100, random_state=42,max_depth=5,test_size=0.2)
+        model = RandomForestClassifier(n_estimators=100, random_state=42,max_depth=5)
         model.fit(X_train_scaled, y_train)
 
         # Dự đoán và đánh giá
@@ -327,9 +331,9 @@ def train_model(data):
         print(classification_report(y_test, y_pred, zero_division=1))
 
         # Lưu mô hình và scaler
-        os.makedirs('models', exist_ok=True)
-        joblib.dump(model, 'models/random_forest_model.joblib')
-        joblib.dump(scaler, 'models/scaler.joblib')
+        os.makedirs('model', exist_ok=True)
+        joblib.dump(model, 'model/heart_disease_rf_model.joblib')
+        joblib.dump(scaler, 'model/heart_disease_scaler.joblib')
 
         return model, scaler
 
@@ -341,8 +345,8 @@ def train_model(data):
 def predict_heart():
     try:
         # Tải mô hình và scaler
-        model = joblib.load('models/random_forest_model.joblib')
-        scaler = joblib.load('models/scaler.joblib')
+        model = joblib.load('model/heart_disease_rf_model.joblib')
+        scaler = joblib.load('model/heart_disease_scaler.joblib')
 
         if request.method == 'POST':
             # Lấy dữ liệu từ form
