@@ -268,37 +268,44 @@
             });
         });
 
-        function validateForm() {
-            let age = document.getElementById("age").value;
-            let resting_blood_pressure = document.getElementById("resting_blood_pressure").value;
-            let cholesterol = document.getElementById("cholesterol").value;
-            let max_heart_rate = document.getElementById("max_heart_rate").value;
-            let blood_sugar = document.getElementById("blood_sugar").value;
+     function validateForm() {
+    let age = document.getElementById("age").value;
+    let resting_blood_pressure = document.getElementById("resting_blood_pressure").value;
+    let cholesterol = document.getElementById("cholesterol").value;
+    let max_heart_rate = document.getElementById("max_heart_rate").value;
+    let blood_sugar = document.getElementById("blood_sugar").value;
 
-            let errorMessage = "";
+    let errorMessage = "";
 
-            if (age < 0 || age > 120) {
-                errorMessage += "Tuổi phải nằm trong khoảng 0 - 120.\n";
-            }
-            if (resting_blood_pressure < 50 || resting_blood_pressure > 250) {
-                errorMessage += "Huyết áp nghỉ phải từ 50 - 250 mmHg.\n";
-            }
-            if (cholesterol < 100 || cholesterol > 600) {
-                errorMessage += "Cholesterol phải từ 100 - 600 mg/dl.\n";
-            }
-            if (max_heart_rate < 50 || max_heart_rate > 220) {
-                errorMessage += "Nhịp tim tối đa phải từ 50 - 220 bpm.\n";
-            }
-            if (blood_sugar < 0 || blood_sugar > 1) {
-                errorMessage += "Đường huyết phải là 0 hoặc 1.\n";
-            }
+    // Kiểm tra từng điều kiện
+    if (age < 20 || age > 80) {
+        errorMessage += "Tuổi phải nằm trong khoảng 20 - 80.\n";
+    }
+    if (resting_blood_pressure < 50 || resting_blood_pressure > 250) {
+        errorMessage += "Huyết áp nghỉ phải từ 50 - 250 mmHg.\n";
+    }
+    if (cholesterol < 100 || cholesterol > 600) {
+        errorMessage += "Cholesterol phải từ 100 - 600 mg/dl.\n";
+    }
+    if (max_heart_rate < 50 || max_heart_rate > 220) {
+        errorMessage += "Nhịp tim tối đa phải từ 50 - 220 bpm.\n";
+    }
+    if (blood_sugar < 0 || blood_sugar > 1) {
+        errorMessage += "Đường huyết phải là 0 hoặc 1.\n";
+    }
 
-            if (errorMessage) {
-                document.getElementById("error").innerText = errorMessage;
-                return false;
-            }
-            return true;
-        }
+    // Hiển thị hoặc ẩn thông báo lỗi
+    if (errorMessage) {
+        document.getElementById("error").innerText = errorMessage;
+        document.getElementById("error").style.display = "block"; // Hiển thị lỗi
+        return false;
+    } else {
+        document.getElementById("error").innerText = "";
+        document.getElementById("error").style.display = "none"; // Ẩn lỗi khi dữ liệu hợp lệ
+        return true;
+    }
+}
+
     </script>
 </body>
 </html>
