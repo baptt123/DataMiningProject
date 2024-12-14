@@ -1,10 +1,137 @@
+{#<!DOCTYPE html>#}
+{#<html lang="en">#}
+{#<head>#}
+{#    <meta charset="UTF-8">#}
+{#    <meta name="viewport" content="width=device-width, initial-scale=1.0">#}
+{#    <title>Heart Disease Prediction</title>#}
+{#    <style>#}
+{#        body {#}
+{#            font-family: Arial, sans-serif;#}
+{#            margin: 20px;#}
+{#            background-color: #f4f4f4;#}
+{#        }#}
+{#        form {#}
+{#            max-width: 600px;#}
+{#            margin: auto;#}
+{#            padding: 20px;#}
+{#            border: 1px solid #ccc;#}
+{#            border-radius: 10px;#}
+{#            background-color: #ffffff;#}
+{#            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);#}
+{#        }#}
+{#        label {#}
+{#            display: block;#}
+{#            margin-bottom: 8px;#}
+{#            font-weight: bold;#}
+{#        }#}
+{#        input[type="number"], select {#}
+{#            width: 100%;#}
+{#            padding: 10px;#}
+{#            margin-bottom: 20px;#}
+{#            border: 1px solid #ccc;#}
+{#            border-radius: 5px;#}
+{#        }#}
+{#        input[type="submit"] {#}
+{#            background-color: #007BFF;#}
+{#            color: white;#}
+{#            padding: 10px 15px;#}
+{#            border: none;#}
+{#            border-radius: 5px;#}
+{#            cursor: pointer;#}
+{#            width: 100%;#}
+{#            font-size: 16px;#}
+{#        }#}
+{#        input[type="submit"]:hover {#}
+{#            background-color: #0056b3;#}
+{#        }#}
+{#        .error {#}
+{#            color: red;#}
+{#            font-size: 0.9em;#}
+{#        }#}
+{#    </style>#}
+{#</head>#}
+{#<body>#}
+{#    <h2 style="text-align: center;">Dự đoán Bệnh Tim</h2>#}
+{#    <form action="{{ url_for('predict_heart') }}" method="POST" onsubmit="return validateForm()">#}
+{#        <label for="age">Tuổi:</label>#}
+{#        <input type="number" id="age" name="age" required>#}
+{##}
+{#        <label for="gender">Giới tính:</label>#}
+{#        <select id="gender" name="gender">#}
+{#            <option value="M">Nam</option>#}
+{#            <option value="F">Nữ</option>#}
+{#        </select>#}
+{##}
+{#        <label for="chest_pain_type">Loại đau ngực (1-4):</label>#}
+{#        <input type="number" id="chest_pain_type" name="chest_pain_type" required min="1" max="4">#}
+{##}
+{#        <label for="resting_blood_pressure">Huyết áp nghỉ (mmHg):</label>#}
+{#        <input type="number" id="resting_blood_pressure" name="resting_blood_pressure" required>#}
+{##}
+{#        <label for="cholesterol">Cholesterol (mg/dl):</label>#}
+{#        <input type="number" id="cholesterol" name="cholesterol" required>#}
+{##}
+{#        <label for="max_heart_rate">Nhịp tim tối đa (bpm):</label>#}
+{#        <input type="number" id="max_heart_rate" name="max_heart_rate" required>#}
+{##}
+{#        <label for="exercise_angina">Đau thắt ngực khi tập:</label>#}
+{#        <select id="exercise_angina" name="exercise_angina">#}
+{#            <option value="Y">Có</option>#}
+{#            <option value="N">Không</option>#}
+{#        </select>#}
+{##}
+{#        <label for="blood_sugar">Đường huyết cao (1: Có, 0: Không):</label>#}
+{#        <input type="number" id="blood_sugar" name="blood_sugar" required min="0" max="1">#}
+{##}
+{#        <div id="error" class="error"></div>#}
+{##}
+{#        <input type="submit" value="Dự đoán">#}
+{#    </form>#}
+{##}
+{#    <script>#}
+{#        function validateForm() {#}
+{#            let age = document.getElementById("age").value;#}
+{#            let resting_blood_pressure = document.getElementById("resting_blood_pressure").value;#}
+{#            let cholesterol = document.getElementById("cholesterol").value;#}
+{#            let max_heart_rate = document.getElementById("max_heart_rate").value;#}
+{#            let blood_sugar = document.getElementById("blood_sugar").value;#}
+{##}
+{#            let errorMessage = "";#}
+{##}
+{#            if (age < 0 || age > 120) {#}
+{#                errorMessage += "Tuổi phải nằm trong khoảng 0 - 120.\n";#}
+{#            }#}
+{#            if (resting_blood_pressure < 50 || resting_blood_pressure > 250) {#}
+{#                errorMessage += "Huyết áp nghỉ phải từ 50 - 250 mmHg.\n";#}
+{#            }#}
+{#            if (cholesterol < 100 || cholesterol > 600) {#}
+{#                errorMessage += "Cholesterol phải từ 100 - 600 mg/dl.\n";#}
+{#            }#}
+{#            if (max_heart_rate < 50 || max_heart_rate > 220) {#}
+{#                errorMessage += "Nhịp tim tối đa phải từ 50 - 220 bpm.\n";#}
+{#            }#}
+{#            if (blood_sugar < 0 || blood_sugar > 1) {#}
+{#                errorMessage += "Đường huyết phải là 0 hoặc 1.\n";#}
+{#            }#}
+{##}
+{#            if (errorMessage) {#}
+{#                document.getElementById("error").innerText = errorMessage;#}
+{#                return false;#}
+{#            }#}
+{#            return true;#}
+{#        }#}
+{#    </script>#}
+{#</body>#}
+{#</html>#}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Heart Disease Prediction</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
+        /* Giữ nguyên style cũ */
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -48,11 +175,16 @@
             color: red;
             font-size: 0.9em;
         }
+        #result {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <h2 style="text-align: center;">Dự đoán Bệnh Tim</h2>
-    <form action="{{ url_for('predict_heart') }}" method="POST" onsubmit="return validateForm()">
+    <form id="heartDiseaseForm">
         <label for="age">Tuổi:</label>
         <input type="number" id="age" name="age" required>
 
@@ -88,7 +220,54 @@
         <input type="submit" value="Dự đoán">
     </form>
 
+    <div id="result"></div>
+
     <script>
+        $(document).ready(function() {
+            $('#heartDiseaseForm').on('submit', function(e) {
+                e.preventDefault(); // Ngăn chặn form submit truyền thống
+
+                // Validate form
+                if (!validateForm()) {
+                    return;
+                }
+
+                // Thu thập dữ liệu từ form
+                let formData = {
+                    age: $('#age').val(),
+                    gender: $('#gender').val(),
+                    chest_pain_type: $('#chest_pain_type').val(),
+                    resting_blood_pressure: $('#resting_blood_pressure').val(),
+                    cholesterol: $('#cholesterol').val(),
+                    max_heart_rate: $('#max_heart_rate').val(),
+                    exercise_angina: $('#exercise_angina').val(),
+                    blood_sugar: $('#blood_sugar').val()
+                };
+
+                // Gửi request AJAX
+                $.ajax({
+                    url: "{{ url_for('predict_heart') }}",
+                    type: 'POST',
+                    contentType: 'application/x-www-form-urlencoded',
+                    data: formData,
+                    success: function(response) {
+                        // Xử lý kết quả
+                        let resultText = response.message === 1
+                            ? "Cảnh báo: Có nguy cơ mắc bệnh tim!"
+                            : "Kết quả: Không có nguy cơ mắc bệnh tim.";
+
+                        $('#result').html(resultText);
+                        $('#result').css('color', response.message === 1 ? 'red' : 'green');
+                    },
+                    error: function(xhr) {
+                        // Xử lý lỗi
+                        $('#result').html('Đã có lỗi xảy ra: ' + xhr.responseJSON.error);
+                        $('#result').css('color', 'red');
+                    }
+                });
+            });
+        });
+
         function validateForm() {
             let age = document.getElementById("age").value;
             let resting_blood_pressure = document.getElementById("resting_blood_pressure").value;
