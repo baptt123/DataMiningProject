@@ -20,6 +20,9 @@ app.secret_key = 'your_secret_key'  # Thay bằng một chuỗi bí mật để 
 # # Khởi tạo mô hình Naive Bayes
 # model_test = GaussianNB()
 # Routes for each HTML page
+@app.route('/')
+def main():
+    return render_template('login.html')
 @app.route('/index')
 def index():
     if 'username' not in session:
@@ -247,7 +250,7 @@ def upload():
 def logout():
     session.pop('username', None)
     flash('Bạn đã đăng xuất', 'info')
-    return redirect(url_for('login_page'))
+    return redirect(url_for('login'))
 @app.route('/test_export_pdf')
 def test_export_pdf():
     return render_template('test_export_pdf.html')
