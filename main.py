@@ -14,9 +14,7 @@ from sklearn.preprocessing import StandardScaler
 global model, scaler
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Thay bằng một chuỗi bí mật để dùng với session
-# model=joblib.load('naive_bayes_model.pkl')
-# # Khởi tạo mô hình Naive Bayes
-# model_test = GaussianNB()
+
 # Routes for each HTML page
 @app.route('/')
 def index():
@@ -119,7 +117,7 @@ def forgot_password():
 
 @app.route('/individual_test')
 def individual_test():
-    return render_template('Individual-Test.html')
+    return render_template('predict.html')
 
 @app.route('/layout')
 def layout():
@@ -341,75 +339,7 @@ def train_model(data):
         print(f"Lỗi khi huấn luyện mô hình: {e}")
         return None, None
 
-# @app.route('/predict_heart', methods=['GET', 'POST'])
-# def predict_heart():
-#     try:
-#         # Tải mô hình và scaler
-#         model = joblib.load('model/heart_disease_rf_model.joblib')
-#         scaler = joblib.load('model/heart_disease_scaler.joblib')
-#
-#         if request.method == 'POST':
-#             # Lấy dữ liệu từ form
-#             age = int(request.form['age'])
-#             gender = request.form['gender']
-#             chest_pain_type = int(request.form['chest_pain_type'])
-#             resting_blood_pressure = int(request.form['resting_blood_pressure'])
-#             cholesterol = int(request.form['cholesterol'])
-#             max_heart_rate = int(request.form['max_heart_rate'])
-#             exercise_angina = request.form['exercise_angina']
-#             blood_sugar = int(request.form['blood_sugar'])
-#
-#             # Mã hóa các thuộc tính
-#             gender_encoded = 1 if gender == 'M' else 0
-#             exercise_angina_encoded = 1 if exercise_angina == 'Y' else 0
-#
-#             # Chuẩn bị dữ liệu để dự đoán
-#             features = pd.DataFrame([[
-#                 age, gender_encoded, chest_pain_type, resting_blood_pressure,
-#                 cholesterol, max_heart_rate, exercise_angina_encoded, blood_sugar
-#             ]], columns=[
-#                 'age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
-#                 'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar'
-#             ])
-#
-#             # Chuẩn hóa đặc trưng
-#             features_scaled = scaler.transform(features)
-#
-#             # Dự đoán kết quả
-#             prediction = model.predict(features_scaled)[0]
-#             result = 1 if prediction == 1 else 0
-#
-#             # Lưu kết quả xuống cơ sở dữ liệu
-#             save_to_db(
-#                 age=age,
-#                 gender=gender,
-#                 chest_pain_type=chest_pain_type,
-#                 resting_blood_pressure=resting_blood_pressure,
-#                 cholesterol=cholesterol,
-#                 max_heart_rate=max_heart_rate,
-#                 exercise_angina=exercise_angina,
-#                 blood_sugar=blood_sugar,
-#                 diagnosis=result
-#             )
-#
-#             # Huấn luyện lại mô hình với dữ liệu mới từ DB
-#             data = load_data_from_db()
-#             train_model(data)
-#
-#             # Trả kết quả về giao diện
-#             return f"""
-#                 <h1>Kết quả chẩn đoán: {'Có bệnh' if result == 1 else 'Không bệnh'}</h1>
-#                 <a href="/">Quay lại</a>
-#             """
-#
-#     except Exception as e:
-#         return f"""
-#             <h1>Đã xảy ra lỗi trong quá trình xử lý: {e}</h1>
-#             <a href="/">Quay lại</a>
-#         """
-#
-#     # Nếu phương thức là GET, hiển thị form
-#     return render_template('Individual-Test.html')
+
 @app.route('/predict_heart', methods=['GET', 'POST'])
 def predict_heart():
     try:
@@ -472,7 +402,7 @@ def predict_heart():
         return jsonify({'error': str(e)}), 500
 
     # Nếu phương thức là GET, hiển thị form
-    return render_template('Individual-Test.html')
+    return render_template('predict.html')
 
 # Khởi tạo mô hình ban đầu khi ứng dụng chạy
 def init_model():
