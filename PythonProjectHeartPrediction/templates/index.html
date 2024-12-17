@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+{% block title %}Home{% endblock %}
+
+{% block body %}
+<!-- Page Header-->
+<header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/heart5.jpg') }}')">
+    <div class="container position-relative px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-12 col-lg-10 col-xl-8">
+                <div class="site-heading">
+{#                    <h1>{{ params['blog_name'] }}</h1>#}
+                    <span class="subheading">Heart Failure Prediction System</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content-->
+<div class="container px-4 px-lg-5">
+    <div class="row gx-4 gx-lg-5 justify-content-center">
+        <div class="col-md-10 col-lg-12 col-xl-11">
+            <!-- TODO: Fetch it using for loop from the database -->
+            <!-- Content section 1-->
+            <section id="scroll">
+                <div class="container px-5">
+                    <div class="row gx-5 align-items-center">
+                        <div class="col-lg-6 order-lg-2">
+                            <div class="p-5">
+                                <img class="img-fluid rounded-circle" src="{{ url_for('static', filename='assets1/assets/img/heart8.jpg') }}" alt="..." />
+                            </div>
+                        </div>
+                        <div class="col-lg-6 order-lg-1">
+                            <div class="p-5">
+                                <h2 class="display-4">Analysis Of Current For Heart Disease!</h2>
+                                <p>In the current era, deaths due to heart disease have become a major issue. Approximately one person dies per minute due to heart disease. Data is generated and has to be stored daily because of fast growth in Information Technology. The data which is collected is converted into knowledge by data analysis using various combinations of algorithms. Healthcare professionals working in the area of cardiac disease have their own limits and cannot forecast the probability of high accuracy in cardiac disease. This paper aims to improve heart disease prediction accuracy using the Logistic Regression model of machine learning, considering the healthcare dataset which classifies patients whether they are having heart diseases or not according to the information in the record.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Content section 2-->
+            <section>
+                <div class="container px-5">
+                    <div class="row gx-5 align-items-center">
+                        <div class="col-lg-6">
+                            <div class="p-5">
+                                <img class="img-fluid rounded-circle" src="{{ url_for('static', filename='assets1/assets/img/heart6.jpg') }}" alt="..." />
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="p-5">
+                                <h2 class="display-4">Medical Survey From Professionals.</h2>
+                                <p>There are many works in literature which diagnose heart diseases using machine learning as well as data mining. A brief survey of that is presented here. A paper named ‘A study of cardiac disease using M's approach to machine learning and analytics.’ On September 2018, Marimuthu, M. Abinaya, K.S. Hariesh, K. Mandhankumar, and V. Pavithra released their work. The result shows that, through the literature survey, they concluded models to increase the accuracy of prediction of heart diseases.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Content section 3-->
+            <section>
+                <div class="container px-5">
+                    <div class="row gx-5 align-items-center">
+                        <div class="col-lg-6 order-lg-2">
+                            <div class="p-5">
+                                <img class="img-fluid rounded-circle" src="{{ url_for('static', filename='assets1/assets/img/heart7.jpg') }}" alt="..." />
+                            </div>
+                        </div>
+                        <div class="col-lg-6 order-lg-1">
+                            <div class="p-5">
+                                <h2 class="display-4">Our System!!</h2>
+                                <p>This proposed system has data which classifies if patients have heart disease or not according to some parameters. This proposed system can try to use this data to create a model that tries to predict (reading data and data exploration) if a patient has this disease or not.
+                                    In this proposed system, using a Random Forest (Decision Tree) algorithm, we use Decision Trees to calculate the score. RandomSearch is a technique where random combinations of the hyperparameters are used to find the best solution for the built model. Finally, analyzing the results with the help of comparing models and decision trees.
+                                    From the data we are having, it is classified into different structured data based on the features of the patient heart. From the availability of the data, we have to create a model that predicts the patients’ disease using a Random Forest algorithm.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}
