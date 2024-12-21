@@ -19,7 +19,12 @@ app.secret_key = 'your_secret_key'  # Thay bằng một chuỗi bí mật để 
 @app.route('/')
 def index():
     return render_template('login.html')
-
+@app.route('/index')
+def index():
+    if 'username' not in session:
+        flash('Vui lòng đăng nhập trước.', 'warning')
+        return redirect(url_for('login'))
+    return render_template('index.html')
 @app.route('/about')
 def about():
     return render_template('about.html')
@@ -111,9 +116,29 @@ def dataset_test():
 def description():
     return render_template('description.html')
 
-@app.route('/forgotpassword')
+@app.route('/forgotpassword', methods=['GET', 'POST'])
 def forgot_password():
-    return render_template('forgotpassword.html')
+    password = None  # Biến để lưu mật khẩu tìm thấy (nếu có)
+
+    if request.method == 'POST':
+        username = request.form['username']
+
+        # Kết nối tới database để tìm kiếm username
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        query = "SELECT password FROM users WHERE username = %s"
+        cursor.execute(query, (username,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if user:
+            password = user[0]  # Lấy mật khẩu từ kết quả truy vấn
+        else:
+            flash("Username not found in the system.", "danger")
+
+    return render_template('forgotpassword.html', password=password)
+
 
 @app.route('/individual_test')
 def individual_test():
@@ -124,6 +149,7 @@ def layout():
     return render_template('layout.html')
 
 @app.route('/login', methods=['GET', 'POST'])
+#Dang nhap
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -149,7 +175,7 @@ def login():
         else:
             # Đăng nhập thất bại
             flash('Thông tin đăng nhập không đúng', 'danger')
-            return redirect(url_for('login_page'))
+            return redirect(url_for('login'))
 
     return render_template('login.html')
 
@@ -207,6 +233,7 @@ def register():
 
     return render_template('register.html')
 
+
 @app.route('/upload')
 def upload():
     return render_template('upload.html')
@@ -216,7 +243,7 @@ def upload():
 def logout():
     session.pop('username', None)
     flash('Bạn đã đăng xuất', 'info')
-    return redirect(url_for('login_page'))
+    return redirect(url_for('login'))
 @app.route('/test_export_pdf')
 def test_export_pdf():
     return render_template('test_export_pdf.html')
