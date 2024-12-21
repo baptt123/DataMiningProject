@@ -17,7 +17,7 @@ app.secret_key = 'your_secret_key'  # Thay bằng một chuỗi bí mật để 
 
 # Routes for each HTML page
 @app.route('/')
-def index():
+def welcome():
     return render_template('login.html')
 @app.route('/index')
 def index():
