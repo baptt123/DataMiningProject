@@ -1,0 +1,8 @@
+Biểu đồ
+Xuất file pdf
+Hiển thị thông tin bệnh nhân
+Nhập thông tin chẩn đoán
+Đăng nhập
+Đăng kí 
+Quên mật khẩu 
+Đăng xuất

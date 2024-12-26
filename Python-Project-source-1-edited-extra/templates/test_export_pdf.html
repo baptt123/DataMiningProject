@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Export DataTable to PDF</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+</head>
+<body>
+  <h2>Danh sách dữ liệu</h2>
+  <table id="example" class="display" style="width:100%">
+    <thead>
+      <tr>
+        <th>Tên</th>
+        <th>Email</th>
+        <th>Quốc gia</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Nguyễn Văn A</td>
+        <td>nva@example.com</td>
+        <td>Việt Nam</td>
+      </tr>
+      <tr>
+        <td>John Doe</td>
+        <td>john@example.com</td>
+        <td>Mỹ</td>
+      </tr>
+      <tr>
+        <td>Jane Smith</td>
+        <td>jane@example.com</td>
+        <td>Canada</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button id="export">Export to PDF</button>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.24/jspdf.plugin.autotable.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      // Khởi tạo DataTable
+      const table = $('#example').DataTable();
+
+      // Xử lý xuất file PDF
+      $('#export').on('click', function () {
+        const { jsPDF } = window.jspdf; // Lấy jsPDF từ window
+        const doc = new jsPDF();
+
+        // Thêm tiêu đề
+        doc.text("Danh sách dữ liệu", 14, 10);
+
+        // Lấy dữ liệu từ DataTable và xuất PDF
+        const data = table.rows().data().toArray();
+        const headers = $('#example thead th').map(function () {
+          return $(this).text();
+        }).get();
+
+        const body = data.map(row => row);
+
+        // Tạo bảng PDF với AutoTable
+        doc.autoTable({
+          head: [headers],
+          body: body,
+          startY: 20,
+        });
+
+        // Lưu file PDF
+        doc.save("datatable.pdf");
+      });
+    });
+  </script>
+</body>
+</html>
