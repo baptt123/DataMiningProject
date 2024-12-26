@@ -162,7 +162,7 @@
         data: {
             labels: ['Có Bệnh Tim', 'Không Có Bệnh Tim'],
             datasets: [{
-                data: [{{ heart_disease_positive }}, {{ heart_disease_negative }}], // Tỷ lệ từ mô hình phân loại
+                data: [{{ heart_disease_positive }}, {{ heart_disease_negative }}],
     backgroundColor: ['#FF6384', '#36A2EB']
     }]
     },
@@ -178,25 +178,25 @@
     });
 
     // Biểu đồ phân tích cụm nguy cơ bệnh tim
+    // Biểu đồ phân tích cụm nguy cơ bệnh tim
     var clusteringCtx = document.getElementById('clusteringChart').getContext('2d');
-    var clusteringData = [
-        {x: {{ age1 }}, y: {{ cholesterol1 }} , r: 10, cluster: 1},
-    {x: {{ age2 }}, y: {{ cholesterol2 }} , r: 10, cluster: 2},
-    {x: {{ age3 }}, y: {{ cholesterol3 }} , r: 10, cluster: 1},
-    // Dữ liệu các nhóm phân cụm nguy cơ
-    ];
+    var clusteringData = {{ chart_data | tojson }}; // Dữ liệu phân cụm từ Python
 
     var clusteringChart = new Chart(clusteringCtx, {
         type: 'scatter',
         data: {
             datasets: [{
-                label: 'Nhóm 1',
-                data: clusteringData.filter(item => item.cluster === 1).map(item => ({x: item.x, y: item.y, r: item.r})),
+                label: 'Cluster 1',
+                data: clusteringData.filter(item => item.cluster === 1).map(item => ({x: item.age, y: item.cholesterol, r: 10})),
                 backgroundColor: 'rgba(75, 192, 192, 0.6)'
             }, {
-                label: 'Nhóm 2',
-                data: clusteringData.filter(item => item.cluster === 2).map(item => ({x: item.x, y: item.y, r: item.r})),
+                label: 'Cluster 2',
+                data: clusteringData.filter(item => item.cluster === 2).map(item => ({x: item.age, y: item.cholesterol, r: 10})),
                 backgroundColor: 'rgba(255, 99, 132, 0.6)'
+            }, {
+                label: 'Cluster 3',
+                data: clusteringData.filter(item => item.cluster === 3).map(item => ({x: item.age, y: item.cholesterol, r: 10})),
+                backgroundColor: 'rgba(153, 102, 255, 0.6)'
             }]
         },
         options: {

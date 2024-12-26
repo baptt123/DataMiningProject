@@ -9,6 +9,7 @@ from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
 
 # Biến toàn cục để lưu mô hình và scaler
 global model, scaler
@@ -29,14 +30,25 @@ def index():
 def about():
     return render_template('about.html')
 
+def perform_kmeans_clustering(data):
+    """Thực hiện phân cụm KMeans trên dữ liệu"""
+    X = data[['age', 'cholesterol']]  # Sử dụng tuổi và cholesterol cho việc phân cụm
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    kmeans = KMeans(n_clusters=3, random_state=42)
+    data['cluster'] = kmeans.fit_predict(X_scaled)
+
+    return data
 @app.route('/chart')
 def chart():
     # Kết nối tới database
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
+
     # Truy vấn dữ liệu bệnh tim
     cursor.execute("""
-         SELECT diagnosis, COUNT(*) 
+         SELECT diagnosis, COUNT(*)
          FROM patients_data_mining
          GROUP BY diagnosis
      """)
@@ -44,7 +56,7 @@ def chart():
 
     # Truy vấn các yếu tố rủi ro (Ví dụ: tuổi, huyết áp, cholesterol, đường huyết)
     cursor.execute("""
-         SELECT AVG(age), AVG(resting_blood_pressure), AVG(cholesterol), AVG(blood_sugar)
+         SELECT age, resting_blood_pressure, cholesterol, blood_sugar
          FROM patients_data_mining
      """)
     risk_factors_data = cursor.fetchall()
@@ -52,15 +64,24 @@ def chart():
     # Đóng kết nối
     conn.close()
 
+    # Chuyển đổi dữ liệu rủi ro thành DataFrame
+    risk_factors_df = pd.DataFrame(risk_factors_data, columns=['age', 'resting_blood_pressure', 'cholesterol', 'blood_sugar'])
+
+    # Áp dụng KMeans để phân nhóm
+    risk_factors_df = perform_kmeans_clustering(risk_factors_df)
+
     # Tính toán tỷ lệ bệnh tim
     heart_disease_positive = heart_disease_data[0][1] if len(heart_disease_data) > 0 else 0
     heart_disease_negative = heart_disease_data[1][1] if len(heart_disease_data) > 1 else 0
 
     # Tính toán các yếu tố rủi ro (Ví dụ: tuổi, huyết áp, cholesterol, đường huyết)
-    age_risk = risk_factors_data[0][0]
-    bp_risk = risk_factors_data[0][1]
-    cholesterol_risk = risk_factors_data[0][2]
-    glucose_risk = risk_factors_data[0][3]
+    age_risk = risk_factors_df['age'].mean()
+    bp_risk = risk_factors_df['resting_blood_pressure'].mean()
+    cholesterol_risk = risk_factors_df['cholesterol'].mean()
+    glucose_risk = risk_factors_df['blood_sugar'].mean()
+
+    # Dữ liệu clustering (chuyển đổi thành dictionary để template dễ sử dụng)
+    clustering_data = risk_factors_df[['age', 'cholesterol', 'cluster']].to_dict(orient='records')
 
     # Trả về dữ liệu cho template
     return render_template('chart.html',
@@ -69,7 +90,8 @@ def chart():
                            age_risk=age_risk,
                            bp_risk=bp_risk,
                            cholesterol_risk=cholesterol_risk,
-                           glucose_risk=glucose_risk)
+                           glucose_risk=glucose_risk,
+                           chart_data=clustering_data)
 
 @app.route('/contact')
 def contact():
