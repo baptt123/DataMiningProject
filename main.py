@@ -23,12 +23,12 @@ def index():
 @app.route('/about')
 def about():
     return render_template('about.html')
-
 @app.route('/chart')
 def chart():
     # Kết nối tới database
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
+
     # Truy vấn dữ liệu bệnh tim
     cursor.execute("""
          SELECT diagnosis, COUNT(*) 
@@ -44,18 +44,52 @@ def chart():
      """)
     risk_factors_data = cursor.fetchall()
 
-    # Đóng kết nối
+    # Phân cụm bằng KMeans
+    cursor.execute("""
+         SELECT age, cholesterol 
+         FROM patients_data_mining
+     """)
+    clustering_data = cursor.fetchall()
+
+    cursor.execute("""
+            SELECT age, resting_blood_pressure, cholesterol
+            FROM patients_data_mining
+            LIMIT 50
+        """)
+    correlation_data = cursor.fetchall()
+
     conn.close()
+
+    # Tiền xử lý dữ liệu phân cụm
+    from sklearn.cluster import KMeans
+    import numpy as np
+
+    clustering_array = np.array(clustering_data)
+    kmeans = KMeans(n_clusters=3, random_state=0).fit(clustering_array)
+    labels = kmeans.labels_
+
+    # Tạo danh sách cụm
+    cluster_1 = [{"x": int(clustering_array[i][0]), "y": int(clustering_array[i][1])}
+                 for i in range(len(labels)) if labels[i] == 0]
+    cluster_2 = [{"x": int(clustering_array[i][0]), "y": int(clustering_array[i][1])}
+                 for i in range(len(labels)) if labels[i] == 1]
+    cluster_3 = [{"x": int(clustering_array[i][0]), "y": int(clustering_array[i][1])}
+                 for i in range(len(labels)) if labels[i] == 2]
 
     # Tính toán tỷ lệ bệnh tim
     heart_disease_positive = heart_disease_data[0][1] if len(heart_disease_data) > 0 else 0
     heart_disease_negative = heart_disease_data[1][1] if len(heart_disease_data) > 1 else 0
 
-    # Tính toán các yếu tố rủi ro (Ví dụ: tuổi, huyết áp, cholesterol, đường huyết)
+    # Tính toán các yếu tố rủi ro
     age_risk = risk_factors_data[0][0]
     bp_risk = risk_factors_data[0][1]
     cholesterol_risk = risk_factors_data[0][2]
     glucose_risk = risk_factors_data[0][3]
+
+    # Chuẩn bị dữ liệu cho biểu đồ tương quan
+    correlation_age_bp_data = [{"x": age, "y": bp} for age, bp, _ in correlation_data]
+    correlation_age_cholesterol_data = [{"x": age, "y": cholesterol} for age, _, cholesterol in correlation_data]
+    correlation_bp_cholesterol_data = [{"x": bp, "y": cholesterol} for _, bp, cholesterol in correlation_data]
 
     # Trả về dữ liệu cho template
     return render_template('chart.html',
@@ -64,7 +98,14 @@ def chart():
                            age_risk=age_risk,
                            bp_risk=bp_risk,
                            cholesterol_risk=cholesterol_risk,
-                           glucose_risk=glucose_risk)
+                           glucose_risk=glucose_risk,
+                           cluster_1=cluster_1,
+                           cluster_2=cluster_2,
+                           cluster_3=cluster_3,
+                           correlation_age_bp_data=correlation_age_bp_data,
+                           correlation_age_cholesterol_data=correlation_age_cholesterol_data,
+                           correlation_bp_cholesterol_data=correlation_bp_cholesterol_data)
+
 
 @app.route('/contact')
 def contact():
