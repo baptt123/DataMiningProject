@@ -1,19 +1,44 @@
 {% extends "layout.html" %}
 
-{% block title %}Home{% endblock title %}
+{% block title %}Phân Tích Bệnh Tim{% endblock title %}
 
 {% block body %}
-<!-- Thêm thẻ link Chart.js -->
+<link rel="stylesheet" href="/static/css/chart-style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Phần hiển thị biểu đồ -->
 <section class="container mt-5">
+    <!-- Biểu đồ tỷ lệ bệnh tim -->
+    <div class="chart-title">Tỷ LỆ BỆNH TIM</div>
     <div class="row">
         <div class="col-md-6">
             <canvas id="heartDiseaseChart"></canvas>
         </div>
         <div class="col-md-6">
             <canvas id="riskFactorsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Biểu đồ tương quan các yếu tố rủi ro -->
+    <div class="chart-title">MA TRẬN TƯƠNG QUAN CÁC YẾU TỐ RỦI RO</div>
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <canvas id="correlationChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Biểu đồ phân loại dự đoán mắc bệnh tim -->
+    <div class="chart-title">Dự Đoán Tỷ Lệ Mắc Bệnh Tim</div>
+    <div class="row">
+        <div class="col-md-6">
+            <canvas id="classificationChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Biểu đồ phân tích cụm nguy cơ bệnh tim -->
+    <div class="chart-title">Phân Tích Cụm Nguy Cơ Bệnh Tim</div>
+    <div class="row">
+        <div class="col-md-12">
+            <canvas id="clusteringChart"></canvas>
         </div>
     </div>
 </section>
@@ -27,16 +52,18 @@
             labels: ['Có Bệnh Tim', 'Không Có Bệnh Tim'],
             datasets: [{
                 data: [{{ heart_disease_positive }}, {{ heart_disease_negative }}],
-                backgroundColor: ['#FF6384', '#36A2EB']
-            }]
-        },
-        options: {
-            responsive: true,
+    backgroundColor: ['#FF6384', '#36A2EB']
+    }]
+    },
+    options: {
+        responsive: true,
+            plugins: {
             title: {
                 display: true,
-                text: 'Tỷ Lệ Bệnh Tim'
+                    text: 'Tỷ Lệ Bệnh Tim'
             }
         }
+    }
     });
 
     // Biểu đồ các yếu tố rủi ro
@@ -48,29 +75,150 @@
             datasets: [{
                 label: 'Mức Độ Rủi Ro',
                 data: [{{ age_risk }}, {{ bp_risk }}, {{ cholesterol_risk }}, {{ glucose_risk }}],
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.6)',
-                    'rgba(54, 162, 235, 0.6)', 
-                    'rgba(255, 206, 86, 0.6)',
-                    'rgba(75, 192, 192, 0.6)'
-                ]
+    backgroundColor: [
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+        'rgba(75, 192, 192, 0.6)'
+    ]
+    }]
+    },
+    options: {
+        responsive: true,
+            scales: {
+            y: {
+                beginAtZero: true,
+                    title: {
+                    display: true,
+                        text: 'Mức Độ Rủi Ro'
+                }
+            }
+        },
+        plugins: {
+            title: {
+                display: true,
+                    text: 'CÁC YẾU TỐ RỦI RO BỆNH TIM'
+            }
+        }
+    }
+    });
+
+    // Biểu đồ tương quan (heatmap)
+    var correlationCtx = document.getElementById('correlationChart').getContext('2d');
+    var correlationData = [
+        {x: 'Tuổi', y: 'Tuổi', v: 1},
+        {x: 'Tuổi', y: 'Huyết Áp', v: {{ age_bp_corr }}},
+    {x: 'Tuổi', y: 'Cholesterol', v: {{ age_cholesterol_corr }}},
+    {x: 'Tuổi', y: 'Đường Huyết', v: {{ age_glucose_corr }}},
+    {x: 'Huyết Áp', y: 'Huyết Áp', v: 1},
+    {x: 'Huyết Áp', y: 'Cholesterol', v: {{ bp_cholesterol_corr }}},
+    {x: 'Huyết Áp', y: 'Đường Huyết', v: {{ bp_glucose_corr }}},
+    {x: 'Cholesterol', y: 'Cholesterol', v: 1},
+    {x: 'Cholesterol', y: 'Đường Huyết', v: {{ cholesterol_glucose_corr }}},
+    {x: 'Đường Huyết', y: 'Đường Huyết', v: 1}
+    ];
+
+    var correlationChart = new Chart(correlationCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Tương Quan',
+                data: correlationData.map(item => ({x: item.x, y: item.y, r: Math.abs(item.v) * 10})),
+                backgroundColor: correlationData.map(item => `rgba(75, 192, 192, ${Math.abs(item.v)})`)
             }]
         },
         options: {
             responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Mức Độ Rủi Ro'
-                    }
-                }
-            },
             plugins: {
                 title: {
                     display: true,
-                    text: 'Các Yếu Tố Rủi Ro Bệnh Tim'
+                    text: 'Ma Trận Tương Quan CÁC YẾU TỐ RỦI RO'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Tương Quan: ${context.raw.r.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'category',
+                    labels: ['Tuổi', 'Huyết Áp', 'Cholesterol', 'Đường Huyết']
+                },
+                y: {
+                    type: 'category',
+                    labels: ['Tuổi', 'Huyết Áp', 'Cholesterol', 'Đường Huyết']
+                }
+            }
+        }
+    });
+
+    // Biểu đồ phân loại dự đoán mắc bệnh tim
+    var classificationCtx = document.getElementById('classificationChart').getContext('2d');
+    var classificationChart = new Chart(classificationCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Có Bệnh Tim', 'Không Có Bệnh Tim'],
+            datasets: [{
+                data: [{{ heart_disease_positive }}, {{ heart_disease_negative }}], // Tỷ lệ từ mô hình phân loại
+    backgroundColor: ['#FF6384', '#36A2EB']
+    }]
+    },
+    options: {
+        responsive: true,
+            plugins: {
+            title: {
+                display: true,
+                    text: 'Dự Đoán Tỷ Lệ Mắc Bệnh Tim'
+            }
+        }
+    }
+    });
+
+    // Biểu đồ phân tích cụm nguy cơ bệnh tim
+    var clusteringCtx = document.getElementById('clusteringChart').getContext('2d');
+    var clusteringData = [
+        {x: {{ age1 }}, y: {{ cholesterol1 }} , r: 10, cluster: 1},
+    {x: {{ age2 }}, y: {{ cholesterol2 }} , r: 10, cluster: 2},
+    {x: {{ age3 }}, y: {{ cholesterol3 }} , r: 10, cluster: 1},
+    // Dữ liệu các nhóm phân cụm nguy cơ
+    ];
+
+    var clusteringChart = new Chart(clusteringCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Nhóm 1',
+                data: clusteringData.filter(item => item.cluster === 1).map(item => ({x: item.x, y: item.y, r: item.r})),
+                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+            }, {
+                label: 'Nhóm 2',
+                data: clusteringData.filter(item => item.cluster === 2).map(item => ({x: item.x, y: item.y, r: item.r})),
+                backgroundColor: 'rgba(255, 99, 132, 0.6)'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Phân Tích Cụm Nguy Cơ Bệnh Tim'
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Tuổi'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Cholesterol'
+                    }
                 }
             }
         }

@@ -1,0 +1,54 @@
+/* Tạo khoảng cách giữa các biểu đồ */
+section.container {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+section.container .row {
+    margin-bottom: 20px;
+}
+
+section.container .row:last-child {
+    margin-bottom: 0;
+}
+
+/* Căn chỉnh biểu đồ trong cột */
+section.container .col-md-6,
+section.container .col-md-12 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+/* Tùy chỉnh canvas biểu đồ */
+canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Tiêu đề của biểu đồ */
+.chart-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+    color: #333;
+}
+
+/* Phong cách toàn trang */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #eef2f3;
+}
+
+/* Căn chỉnh tooltip */
+.tooltip {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+    color: #fff !important;
+    font-size: 12px;
+    padding: 5px 10px !important;
+    border-radius: 5px;
+}
