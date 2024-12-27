@@ -219,9 +219,55 @@ def logout():
     session.pop('username', None)
     flash('Bạn đã đăng xuất', 'info')
     return redirect(url_for('login_page'))
+
+
 @app.route('/test_export_pdf')
 def test_export_pdf():
-    return render_template('test_export_pdf.html')
+    try:
+        # Kết nối database
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+
+        # Truy vấn dữ liệu
+        query = """
+            SELECT 
+                patient_id,
+                age, 
+                CASE 
+                    WHEN gender = 'M' THEN 'Nam'
+                    WHEN gender = 'F' THEN 'Nữ'
+                    ELSE gender
+                END as gender,
+                chest_pain_type,
+                resting_blood_pressure,
+                cholesterol,
+                max_heart_rate,
+                CASE 
+                    WHEN exercise_angina = 'Y' THEN 'Có'
+                    WHEN exercise_angina = 'N' THEN 'Không'
+                    ELSE exercise_angina
+                END as exercise_angina,
+                blood_sugar,
+                CASE 
+                    WHEN diagnosis = 1 THEN 'Có bệnh'
+                    WHEN diagnosis = 0 THEN 'Không bệnh'
+                    ELSE CAST(diagnosis AS CHAR)
+                END as diagnosis
+            FROM patients_data_mining
+            ORDER BY patient_id
+        """
+        cursor.execute(query)
+        data = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return render_template('test_export_pdf.html', data=data)
+
+    except Exception as e:
+        return f"Lỗi khi lấy dữ liệu: {str(e)}"
+
+
 # Cấu hình kết nối MySQL
 db_config = {
     'host': 'localhost',
