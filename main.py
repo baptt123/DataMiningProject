@@ -2,7 +2,7 @@ import os
 
 import joblib
 import pandas as pd
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import mysql.connector
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
@@ -84,7 +84,7 @@ def datapatient():
 
     # Truy vấn dữ liệu từ database
     query = """
-        SELECT age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
+        SELECT patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
                max_heart_rate, exercise_angina, blood_sugar, diagnosis
         FROM patients_data_mining
     """
@@ -104,7 +104,49 @@ def datapatient():
     # Trả về template và truyền dữ liệu vào template
     return render_template('datapatient.html', data=data, params=params)
 
+@app.route('/delete_patient', methods=['POST'])
+def delete_patient():
+    # Get the patient_id from the AJAX request
+    patient_id_to_delete = request.json.get('patient_id')
 
+    if patient_id_to_delete:
+        # Print the patient_id to the terminal
+        print(f"Received patient_id to delete: {patient_id_to_delete}")
+
+        # Establish database connection
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+
+        try:
+            # Perform deletion from the database
+            delete_query = "DELETE FROM patients_data_mining WHERE patient_id = %s"
+            cursor.execute(delete_query, (patient_id_to_delete,))
+            conn.commit()
+
+            # Fetch updated patient data
+            query = """
+            SELECT patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
+                   max_heart_rate, exercise_angina, blood_sugar, diagnosis
+            FROM patients_data_mining
+            """
+            cursor.execute(query)
+            data = cursor.fetchall()
+
+            # Close connection
+            conn.close()
+
+            # Return success response with updated data
+            return jsonify({'status': 'success', 'message': 'Patient deleted successfully!', 'data': data})
+
+        except Exception as e:
+            conn.rollback()
+            conn.close()
+            return jsonify({'status': 'error', 'message': f'Error: {str(e)}'})
+    else:
+        return jsonify({'status': 'error', 'message': 'No patient ID provided.'})
+
+if __name__ == "__main__":
+    app.run(debug=True)
 @app.route('/dataset_test')
 def dataset_test():
     return render_template('Dataset_test.html')
