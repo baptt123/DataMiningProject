@@ -21,9 +21,15 @@
 
 <!-- Main Content -->
 <div class="container px-4 px-lg-5 mt-5">
+    <!-- Export Buttons -->
+    <div class="mb-4">
+        <button class="btn btn-primary" id="exportPdfBtn">Export as PDF</button>
+        <button class="btn btn-success" id="exportExcelBtn">Export as Excel</button>
+    </div>
+
     <!-- Data Table with enhanced style -->
     <div class="table-responsive shadow-lg rounded">
-        <table class="table table-hover align-middle table-striped table-bordered">
+        <table class="table table-hover align-middle table-striped table-bordered" id="dataTable">
             <thead class="thead-light bg-gradient text-white">
                 <tr>
                     <th>#</th>
@@ -60,6 +66,37 @@
 
 <!-- Scroll to Top Button -->
 <button id="scrollTopBtn" title="Go to top">&#8593;</button>
+
+<!-- Scripts for Exporting PDF and Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.21/jspdf.plugin.autotable.min.js"></script> <!-- Added autoTable plugin -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+
 <script src="/static/js/datapatient.js"></script>
+
+<script>
+    // PDF Export Function
+    document.getElementById('exportPdfBtn').addEventListener('click', function() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const table = document.getElementById('dataTable');
+
+        // Use autoTable plugin to generate the table in PDF
+        doc.autoTable({
+            html: table,
+            startY: 20, // Adjust to avoid header overlap
+            theme: 'grid', // Optional: adjust table style (e.g., 'striped', 'grid', etc.)
+        });
+
+        doc.save('data.pdf');
+    });
+
+    // Excel Export Function
+    document.getElementById('exportExcelBtn').addEventListener('click', function() {
+        const table = document.getElementById('dataTable');
+        const wb = XLSX.utils.table_to_book(table, { sheet: 'Sheet1' });
+        XLSX.writeFile(wb, 'data.xlsx');
+    });
+</script>
 
 {% endblock %}
