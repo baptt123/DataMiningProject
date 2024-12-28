@@ -44,7 +44,7 @@
                     <th>Diagnosis</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="tableBody">
                 {% for record in data %}
                 <tr class="hover-effect">
                     <td>{{ loop.index }}</td>
@@ -62,6 +62,15 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-container text-center mt-3">
+        <button class="btn btn-secondary" id="prevPageBtn">Previous</button>
+        <div id="pageNumbers" class="d-inline-block">
+            <!-- Dynamic page numbers will appear here -->
+        </div>
+        <button class="btn btn-secondary" id="nextPageBtn">Next</button>
+    </div>
 </div>
 
 <!-- Scroll to Top Button -->
@@ -75,7 +84,105 @@
 <script src="/static/js/datapatient.js"></script>
 
 <script>
-    // PDF Export Function
+    // Pagination Logic
+    const rowsPerPage = 10;
+    let currentPage = 1;
+
+    // Sample data (Replace this with your actual data from Flask context)
+    const tableRows = [...document.querySelectorAll('#dataTable tbody tr')];
+    const totalRows = tableRows.length;
+    const totalPages = Math.ceil(totalRows / rowsPerPage);
+
+    // Pagination Controls
+    const pageNumbersContainer = document.getElementById('pageNumbers');
+
+    // Function to update the table
+    function updateTable() {
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+
+        // Hide all rows first
+        tableRows.forEach(row => row.style.display = 'none');
+
+        // Show rows for the current page
+        for (let i = start; i < end && i < totalRows; i++) {
+            tableRows[i].style.display = '';
+        }
+
+        // Update page number display
+        updatePageButtons();
+    }
+
+    // Function to update the page buttons (pagination controls)
+    function updatePageButtons() {
+        pageNumbersContainer.innerHTML = '';
+
+        // Show previous and next buttons only if necessary
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+
+        if (currentPage > 1) {
+            prevBtn.disabled = false;
+        } else {
+            prevBtn.disabled = true;
+        }
+
+        if (currentPage < totalPages) {
+            nextBtn.disabled = false;
+        } else {
+            nextBtn.disabled = true;
+        }
+
+        // Show page numbers depending on total pages
+        let startPage = 1;
+        let endPage = Math.min(totalPages, 5);
+
+        if (totalPages > 5) {
+            // If more than 5 pages, show a sliding window of page numbers
+            startPage = currentPage <= 3 ? 1 : currentPage - 2;
+            endPage = Math.min(totalPages, startPage + 4);
+        }
+
+        // Display page numbers
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.classList.add('btn', 'btn-outline-secondary', 'mx-1');
+            pageBtn.textContent = i;
+
+            // Highlight current page
+            if (i === currentPage) {
+                pageBtn.classList.add('active');
+            }
+
+            // Add event listener for page click
+            pageBtn.addEventListener('click', function () {
+                currentPage = i;
+                updateTable();
+            });
+
+            pageNumbersContainer.appendChild(pageBtn);
+        }
+    }
+
+    // Event listeners for pagination buttons
+    document.getElementById('prevPageBtn').addEventListener('click', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            updateTable();
+        }
+    });
+
+    document.getElementById('nextPageBtn').addEventListener('click', function() {
+        if (currentPage < totalPages) {
+            currentPage++;
+            updateTable();
+        }
+    });
+
+    // Initialize the table to show the first page of data
+    updateTable();
+
+    // PDF Export Function (Exports all rows, not just the current page)
     document.getElementById('exportPdfBtn').addEventListener('click', function() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -91,7 +198,7 @@
         doc.save('data.pdf');
     });
 
-    // Excel Export Function
+    // Excel Export Function (Exports all rows, not just the current page)
     document.getElementById('exportExcelBtn').addEventListener('click', function() {
         const table = document.getElementById('dataTable');
         const wb = XLSX.utils.table_to_book(table, { sheet: 'Sheet1' });
