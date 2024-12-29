@@ -3,63 +3,360 @@
 {% block title %}Home{% endblock title %}
 
 {% block body %}
-<link rel="stylesheet" href="/static/css/datapatient.css">
+    <link rel="stylesheet" href="/static/css/datapatient.css">
 
-<!-- Page Header with Parallax effect -->
-<header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/heart5.jpg') }}'); height: 500px; background-attachment: fixed; background-size: cover;">
-    <div class="container position-relative px-4 px-lg-5 h-100">
-        <div class="row h-100 justify-content-center align-items-center">
-            <div class="col-md-12 text-center">
-                <div class="site-heading text-white" style="font-family: 'Montserrat', sans-serif;">
-                    <h1 class="display-4 font-weight-bold">{{ params['blog_name'] }}</h1>
-                    <p class="lead">Heart Failure Prediction System</p>
+    <!-- Page Header with Parallax effect -->
+    <header class="masthead"
+            style="background-image: url('{{ url_for('static', filename='assets/img/heart5.jpg') }}'); height: 500px; background-attachment: fixed; background-size: cover;">
+        <div class="container position-relative px-4 px-lg-5 h-100">
+            <div class="row h-100 justify-content-center align-items-center">
+                <div class="col-md-12 text-center">
+                    <div class="site-heading text-white" style="font-family: 'Montserrat', sans-serif;">
+                        <h1 class="display-4 font-weight-bold">{{ params['blog_name'] }}</h1>
+                        <p class="lead">Hệ thống dự đoán bệnh tim</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</header>
+    </header>
 
-<!-- Main Content -->
-<div class="container px-4 px-lg-5 mt-5">
-    <!-- Data Table with enhanced style -->
-    <div class="table-responsive shadow-lg rounded">
-        <table class="table table-hover align-middle table-striped table-bordered">
-            <thead class="thead-light bg-gradient text-white">
+    <!-- Main Content -->
+    <div class="container px-4 px-lg-5 mt-5">
+        <!-- Export Buttons -->
+        <div class="mb-4">
+            <button class="btn btn-primary" id="exportPdfBtn">Xuất PDF</button>
+            <button class="btn btn-success" id="exportExcelBtn">Xuất Excel</button>
+            <button class="btn btn-warning" id="addMoreBtn">Thêm</button>
+        </div>
+
+        <!-- Data Table with enhanced style -->
+        <div class="table-responsive shadow-lg rounded">
+            <table class="table table-hover align-middle table-striped table-bordered" id="dataTable">
+                <thead class="thead-light bg-gradient text-white">
                 <tr>
-                    <th>#</th>
-                    <th>Age</th>
-                    <th>Gender</th>
-                    <th>Chest Pain Type</th>
-                    <th>Resting Blood Pressure</th>
+                    <th>ID</th>
+                    <th>Tuổi</th>
+                    <th>Giới tính</th>
+                    <th>Loại đau ngực</th>
+                    <th>Huyết áp</th>
                     <th>Cholesterol</th>
-                    <th>Max Heart Rate</th>
-                    <th>Exercise Angina</th>
-                    <th>Blood Sugar</th>
-                    <th>Diagnosis</th>
+                    <th>Nhịp tim tối đa</th>
+                    <th>Đau thắt ngực</th>
+                    <th>Đường huyết</th>
+                    <th>Chẩn đoán</th>
                 </tr>
-            </thead>
-            <tbody>
+                </thead>
+                <tbody id="tableBody">
                 {% for record in data %}
-                <tr class="hover-effect">
-                    <td>{{ loop.index }}</td>
-                    <td>{{ record[0] }}</td>
-                    <td>{{ record[1] }}</td>
-                    <td>{{ record[2] }}</td>
-                    <td>{{ record[3] }}</td>
-                    <td>{{ record[4] }}</td>
-                    <td>{{ record[5] }}</td>
-                    <td>{{ record[6] }}</td>
-                    <td>{{ record[7] }}</td>
-                    <td>{{ record[8] }}</td>
-                </tr>
+                    <tr class="hover-effect">
+                        <td>{{ record[0] }}</td> <!-- Display patient_id (first element of the record) -->
+                        <td>{{ record[1] }}</td>
+                        <td>{{ record[2] }}</td>
+                        <td>{{ record[3] }}</td>
+                        <td>{{ record[4] }}</td>
+                        <td>{{ record[5] }}</td>
+                        <td>{{ record[6] }}</td>
+                        <td>{{ record[7] }}</td>
+                        <td>{{ record[8] }}</td>
+                        <td>{{ record[9] }}</td>
+                        <td>
+                            <button class="btn btn-danger delete-btn" data-patient-id="{{ record[0] }}">Delete</button>
+                        </td> <!-- Use patient_id for deletion -->
+                    </tr>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+                </tbody>
+            </table>
 
-<!-- Scroll to Top Button -->
-<button id="scrollTopBtn" title="Go to top">&#8593;</button>
-<script src="/static/js/datapatient.js"></script>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-container text-center mt-3">
+            <button class="btn btn-secondary" id="prevPageBtn">Trang trước</button>
+            <div id="pageNumbers" class="d-inline-block">
+                <!--Thứ tự trang sẽ hiển thị ở đây-->
+            </div>
+            <button class="btn btn-secondary" id="nextPageBtn">Trang sau</button>
+        </div>
+
+        <!-- Add More Button -->
+    </div>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollTopBtn" title="Go to top">&#8593;</button>
+
+    <!-- Scripts for Exporting PDF and Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.21/jspdf.plugin.autotable.min.js"></script>
+    <!-- Added autoTable plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+
+    <script src="/static/js/datapatient.js"></script>
+    <script>
+        // Logic phân trang
+        const rowsPerPage = 10;
+        let currentPage = 1;
+
+        // Dữ liệu lấy từ Backend
+        const tableRows = [...document.querySelectorAll('#dataTable tbody tr')];
+        const totalRows = tableRows.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
+
+        // Biến lưu điều chỉnh trang
+        const pageNumbersContainer = document.getElementById('pageNumbers');
+
+        // Cập nhật bảng
+        function updateTable() {
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            // Ẩn tất cả dòng
+            tableRows.forEach(row => row.style.display = 'none');
+
+            // Hiển thị các dòng hiện tại
+            for (let i = start; i < end && i < totalRows; i++) {
+                tableRows[i].style.display = '';
+            }
+
+            // Cập nhật các nút phân trang
+            updatePageButtons();
+        }
+
+        // Hàm cập nhật các nút phân trang
+        function updatePageButtons() {
+            pageNumbersContainer.innerHTML = '';
+
+            // Hiển thị các nút trước và tiếp theo chỉ khi cần thiết
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+
+            if (currentPage > 1) {
+                prevBtn.disabled = false;
+            } else {
+                prevBtn.disabled = true;
+            }
+
+            if (currentPage < totalPages) {
+                nextBtn.disabled = false;
+            } else {
+                nextBtn.disabled = true;
+            }
+
+            // Hiển thị số trang tùy theo tổng số trang
+            let startPage = 1;
+            let endPage = Math.min(totalPages, 5);
+
+            if (totalPages > 5) {
+                // Nếu có hơn 5 trang, hiển thị cửa sổ trượt của các số trang
+                startPage = currentPage <= 3 ? 1 : currentPage - 2;
+                endPage = Math.min(totalPages, startPage + 4);
+            }
+
+            // Hiển thị các số trang
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.classList.add('btn', 'btn-outline-secondary', 'mx-1');
+                pageBtn.textContent = i;
+
+                // Làm nổi bật trang hiện tại
+                if (i === currentPage) {
+                    pageBtn.classList.add('active');
+                }
+
+                // Thêm sự kiện cho việc click vào số trang
+                pageBtn.addEventListener('click', function () {
+                    currentPage = i;
+                    updateTable();
+                });
+
+                pageNumbersContainer.appendChild(pageBtn);
+            }
+        }
+
+        // Sự kiện cho các nút phân trang
+        document.getElementById('prevPageBtn').addEventListener('click', function () {
+            if (currentPage > 1) {
+                currentPage--;
+                updateTable();
+            }
+        });
+
+        document.getElementById('nextPageBtn').addEventListener('click', function () {
+            if (currentPage < totalPages) {
+                currentPage++;
+                updateTable();
+            }
+        });
+
+        // Khởi tạo bảng hiển thị trang đầu tiên
+        updateTable();
+    </script>
+    {# <script>#}
+    {#    // Logic phân trang#}
+    {#    const rowsPerPage = 10;#}
+    {#    let currentPage = 1;#}
+    {##}
+    {#    // Dữ liệu lấy từ Backend#}
+    {#    const tableRows = [...document.querySelectorAll('#dataTable tbody tr')];#}
+    {#    const totalRows = tableRows.length;#}
+    {#    const totalPages = Math.ceil(totalRows / rowsPerPage);#}
+    {##}
+    {#    // Biến lưu điều chỉnh trang#}
+    {#    const pageNumbersContainer = document.getElementById('pageNumbers');#}
+    {##}
+    {#    // Cập nhật bảng#}
+    {#    function updateTable() {#}
+    {#        const start = (currentPage - 1) * rowsPerPage;#}
+    {#        const end = start + rowsPerPage;#}
+    {##}
+    {#        // Ẩn tất cả dòng#}
+    {#        tableRows.forEach(row => row.style.display = 'none');#}
+    {##}
+    {#        // Hiển thị các dòng hiện tại#}
+    {#        for (let i = start; i < end && i < totalRows; i++) {#}
+    {#            tableRows[i].style.display = '';#}
+    {#        }#}
+    {##}
+    {#        // Cập nhật các nút phân trang#}
+    {#        updatePageButtons();#}
+    {#    }#}
+    {##}
+    {#    // Hàm cập nhật các nút phân trang#}
+    {#    function updatePageButtons() {#}
+    {#        pageNumbersContainer.innerHTML = '';#}
+    {##}
+    {#        // Hiển thị các nút trước và tiếp theo chỉ khi cần thiết#}
+    {#        const prevBtn = document.getElementById('prevPageBtn');#}
+    {#        const nextBtn = document.getElementById('nextPageBtn');#}
+    {##}
+    {#        if (currentPage > 1) {#}
+    {#            prevBtn.disabled = false;#}
+    {#        } else {#}
+    {#            prevBtn.disabled = true;#}
+    {#        }#}
+    {##}
+    {#        if (currentPage < totalPages) {#}
+    {#            nextBtn.disabled = false;#}
+    {#        } else {#}
+    {#            nextBtn.disabled = true;#}
+    {#        }#}
+    {##}
+    {#        // Hiển thị số trang tùy theo tổng số trang#}
+    {#        let startPage = 1;#}
+    {#        let endPage = Math.min(totalPages, 5);#}
+    {##}
+    {#        if (totalPages > 5) {#}
+    {#            // Nếu có hơn 5 trang, hiển thị cửa sổ trượt của các số trang#}
+    {#            startPage = currentPage <= 3 ? 1 : currentPage - 2;#}
+    {#            endPage = Math.min(totalPages, startPage + 4);#}
+    {#        }#}
+    {##}
+    {#        // Hiển thị các số trang#}
+    {#        for (let i = startPage; i <= endPage; i++) {#}
+    {#            const pageBtn = document.createElement('button');#}
+    {#            pageBtn.classList.add('btn', 'btn-outline-secondary', 'mx-1');#}
+    {#            pageBtn.textContent = i;#}
+    {##}
+    {#            // Làm nổi bật trang hiện tại#}
+    {#            if (i === currentPage) {#}
+    {#                pageBtn.classList.add('active');#}
+    {#            }#}
+    {##}
+    {#            // Thêm sự kiện cho việc click vào số trang#}
+    {#            pageBtn.addEventListener('click', function () {#}
+    {#                currentPage = i;#}
+    {#                updateTable();#}
+    {#            });#}
+    {##}
+    {#            pageNumbersContainer.appendChild(pageBtn);#}
+    {#        }#}
+    {#    }#}
+    {##}
+    {#    // Sự kiện cho các nút phân trang#}
+    {#    document.getElementById('prevPageBtn').addEventListener('click', function () {#}
+    {#        if (currentPage > 1) {#}
+    {#            currentPage--;#}
+    {#            updateTable();#}
+    {#        }#}
+    {#    });#}
+    {##}
+    {#    document.getElementById('nextPageBtn').addEventListener('click', function () {#}
+    {#        if (currentPage < totalPages) {#}
+    {#            currentPage++;#}
+    {#            updateTable();#}
+    {#        }#}
+    {#    });#}
+    {##}
+    {#    // Khởi tạo bảng hiển thị trang đầu tiên#}
+    {#    updateTable();#}
+    {##}
+    {#    // Hàm xuất PDF (Xuất tất cả các dòng, không chỉ các trang hiện tại)#}
+    {#    document.getElementById('exportPdfBtn').addEventListener('click', function () {#}
+    {#        const {jsPDF} = window.jspdf;#}
+    {#        const doc = new jsPDF();#}
+    {#        const table = document.getElementById('dataTable');#}
+    {##}
+    {#        // Sử dụng plugin autoTable để tạo bảng trong PDF#}
+    {#        doc.autoTable({#}
+    {#            html: table,#}
+    {#            startY: 20, // Điều chỉnh để tránh chồng lấp tiêu đề#}
+    {#            theme: 'grid', // Tùy chọn: điều chỉnh phong cách bảng (ví dụ: 'striped', 'grid', v.v.)#}
+    {#        });#}
+    {##}
+    {#        doc.save('data.pdf');#}
+    {#    });#}
+    {##}
+    {#    // Hàm xuất Excel (Xuất tất cả các dòng, không chỉ các trang hiện tại)#}
+    {#    document.getElementById('exportExcelBtn').addEventListener('click', function () {#}
+    {#        const table = document.getElementById('dataTable');#}
+    {#        const wb = XLSX.utils.table_to_book(table, {sheet: 'Sheet1'});#}
+    {#        XLSX.writeFile(wb, 'data.xlsx');#}
+    {#    });#}
+    {##}
+    {#    // Xử lý sự kiện nút Xóa#}
+    {#    document.querySelectorAll('.delete-btn').forEach(function (button) {#}
+    {#        button.addEventListener('click', function () {#}
+    {#            const patientId = this.getAttribute('data-patient-id');#}
+    {##}
+    {#            // In ra ID bệnh nhân (terminal)#}
+    {#            console.log('Đang xóa bệnh nhân với ID:', patientId);#}
+    {##}
+    {#            // Xác nhận trước khi xóa#}
+    {#            if (confirm('Bạn chắc chắn muốn xóa bệnh nhân này?')) {#}
+    {#                // Gửi yêu cầu AJAX để xóa bệnh nhân#}
+    {#                fetch('/delete_patient', {  // Giả sử route là "/delete_patient"#}
+    {#                    method: 'POST',  // Sử dụng phương thức POST để xóa#}
+    {#                    headers: {#}
+    {#                        'Content-Type': 'application/json',#}
+    {#                    },#}
+    {#                    body: JSON.stringify({patient_id: patientId})  // Gửi patient_id dưới dạng JSON#}
+    {#                })#}
+    {#                    .then(response => response.json())#}
+    {#                    .then(data => {#}
+    {#                        if (data.status === 'success') {#}
+    {#                            // Xóa dòng khỏi bảng nếu thành công#}
+    {#                            this.closest('tr').remove();#}
+    {##}
+    {#                            // Bạn có thể cập nhật lại bảng với dữ liệu mới nếu cần#}
+    {#                            // Ví dụ: render dữ liệu bệnh nhân mới từ 'data.data'#}
+    {#                            alert('Đã xóa bệnh nhân thành công!');#}
+    {#                        } else {#}
+    {#                            alert('Xóa bệnh nhân thất bại. Vui lòng thử lại.');#}
+    {#                        }#}
+    {#                    })#}
+    {#                    .catch(error => {#}
+    {#                        console.error('Lỗi:', error);#}
+    {#                        alert('Đã xảy ra lỗi khi xóa bệnh nhân.');#}
+    {#                    });#}
+    {#            }#}
+    {#        });#}
+    {#    });#}
+    {##}
+    {#    document.getElementById('addMoreBtn').addEventListener('click', function () {#}
+    {#        // Chuyển hướng đến trang /individual_test#}
+    {#        window.location.href = '/individual_test';  // Điều này sẽ chuyển hướng trình duyệt đến URL được chỉ định#}
+    {#    });#}
+    {#    // Xử lý sự kiện nút Thêm Mới (để đơn giản, chúng ta sẽ mô phỏng việc thêm dòng)#}
+    {#</script>#}
+
 
 {% endblock %}

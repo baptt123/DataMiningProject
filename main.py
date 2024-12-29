@@ -6,29 +6,54 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import mysql.connector
 from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score, \
+    confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler
 
+# Định nghĩa danh sách các route cần kiểm tra quyền truy cập
+restricted_routes = ['/chart', '/exportpdf', '/datapatient']
 # Biến toàn cục để lưu mô hình và scaler
 global model, scaler
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Thay bằng một chuỗi bí mật để dùng với session
 
+
+@app.before_request
+def check_admin():
+    # Lấy URL hiện tại và kiểm tra xem nó có trong danh sách restricted_routes không
+    if request.path in restricted_routes:
+        # Kiểm tra nếu session có chứa username và role là admin
+        if 'username' not in session or session.get('role') != 'admin':
+            flash('You must be an admin to access this page.', 'danger')
+            return redirect(url_for('login'))  # Chuyển hướng về trang đăng nhập
+
+
+# # Phân quyền đăng nhập
+@app.route('/role', methods=['GET'])
+def role():
+    return render_template('role.html')
+
+
 # Routes for each HTML page
 @app.route('/')
 def welcome():
-    return render_template('login.html')
+    return render_template('role.html')
+
+
 @app.route('/index')
 def index():
-    if 'username' not in session:
-        flash('Vui lòng đăng nhập trước.', 'warning')
-        return redirect(url_for('login'))
+    # if 'username' not in session:
+    #     flash('Vui lòng đăng nhập trước.', 'warning')
+    #     return redirect(url_for('login'))
     return render_template('index.html')
+
+
 @app.route('/about')
 def about():
     return render_template('about.html')
+
 
 @app.route('/chart')
 def chart():
@@ -113,13 +138,15 @@ def chart():
                            correlation_age_cholesterol_data=correlation_age_cholesterol_data,
                            correlation_bp_cholesterol_data=correlation_bp_cholesterol_data)
 
+
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
 
-@app.route('/copy')
-def copy():
-    return render_template('copy.html')
+
+# @app.route('/copy')
+# def copy():
+#     return render_template('copy.html')
 
 @app.route('/datapatient')
 def datapatient():
@@ -150,13 +177,14 @@ def datapatient():
     return render_template('datapatient.html', data=data, params=params)
 
 
-@app.route('/dataset_test')
-def dataset_test():
-    return render_template('Dataset_test.html')
+# @app.route('/dataset_test')
+# def dataset_test():
+#     return render_template('Dataset_test.html')
 
 @app.route('/description')
 def description():
     return render_template('description.html')
+
 
 @app.route('/forgotpassword', methods=['GET', 'POST'])
 def forgot_password():
@@ -182,16 +210,48 @@ def forgot_password():
     return render_template('forgotpassword.html', password=password)
 
 
-@app.route('/individual_test')
-def individual_test():
+@app.route('/predict')
+def predict():
     return render_template('predict.html')
+
 
 @app.route('/layout')
 def layout():
     return render_template('layout.html')
 
+
+# @app.route('/login', methods=['GET', 'POST'])
+# #Dang nhap
+# def login():
+#     if request.method == 'POST':
+#         username = request.form['username']
+#         password = request.form['password']
+#
+#         # Kết nối tới database
+#         conn = mysql.connector.connect(**db_config)
+#         cursor = conn.cursor()
+#
+#         # Kiểm tra thông tin người dùng
+#         query = "SELECT * FROM users WHERE username = %s AND password = %s"
+#         cursor.execute(query, (username, password))
+#         user = cursor.fetchone()
+#
+#         cursor.close()
+#         conn.close()
+#
+#         if user:
+#             # Đăng nhập thành công
+#             session['username'] = username
+#             flash('Đăng nhập thành công', 'success')
+#             return redirect(url_for('index'))
+#         else:
+#             # Đăng nhập thất bại
+#             flash('Thông tin đăng nhập không đúng', 'danger')
+#             return redirect(url_for('login'))
+#
+#     return render_template('login.html')
+
 @app.route('/login', methods=['GET', 'POST'])
-#Dang nhap
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -199,10 +259,10 @@ def login():
 
         # Kết nối tới database
         conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)  # Trả về kết quả dưới dạng từ điển
 
-        # Kiểm tra thông tin người dùng
-        query = "SELECT * FROM users WHERE username = %s AND password = %s"
+        # Kiểm tra thông tin người dùng và lấy role
+        query = "SELECT username, role FROM users WHERE username = %s AND password = %s"
         cursor.execute(query, (username, password))
         user = cursor.fetchone()
 
@@ -210,8 +270,9 @@ def login():
         conn.close()
 
         if user:
-            # Đăng nhập thành công
-            session['username'] = username
+            # Đăng nhập thành công, lưu thông tin vào session
+            session['username'] = user['username']
+            session['role'] = user['role']
             flash('Đăng nhập thành công', 'success')
             return redirect(url_for('index'))
         else:
@@ -221,6 +282,13 @@ def login():
 
     return render_template('login.html')
 
+
+# Kiểm tra trước khi vào trang thông tin bệnh nhân ở phía admin
+# @app.before_request
+# def restrict_admin_page():
+#     if request.endpoint == 'admin' and ('username' not in session or session.get('role') != 'admin'):
+#         flash('Bạn không có quyền truy cập trang admin', 'danger')
+#         return redirect(url_for('login'))
 # Đăng ký
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -261,10 +329,10 @@ def register():
 
         # Thêm thông tin người dùng vào database
         insert_query = """
-        INSERT INTO users (username, password)
-        VALUES (%s, %s)
+        INSERT INTO users (username, password,role)
+        VALUES (%s, %s,%s)
         """
-        cursor.execute(insert_query, (username, password))
+        cursor.execute(insert_query, (username, password, 'user'))
         conn.commit()
 
         cursor.close()
@@ -276,9 +344,9 @@ def register():
     return render_template('register.html')
 
 
-@app.route('/upload')
-def upload():
-    return render_template('upload.html')
+# @app.route('/upload')
+# def upload():
+#     return render_template('upload.html')
 
 # Đăng xuất
 @app.route('/logout')
@@ -286,51 +354,169 @@ def logout():
     session.pop('username', None)
     flash('Bạn đã đăng xuất', 'info')
     return redirect(url_for('login'))
-@app.route('/test_export_pdf')
+
+
+# @app.route('/exportpdf')
+# def test_export_pdf():
+#     try:
+#         # Kết nối database
+#         conn = mysql.connector.connect(**db_config)
+#         cursor = conn.cursor()
+#
+#         # Truy vấn dữ liệu
+#         query = """
+#             SELECT
+#                 patient_id,
+#                 age,
+#                 CASE
+#                     WHEN gender = 'M' THEN 'Nam'
+#                     WHEN gender = 'F' THEN 'Nữ'
+#                     ELSE gender
+#                 END as gender,
+#                 chest_pain_type,
+#                 resting_blood_pressure,
+#                 cholesterol,
+#                 max_heart_rate,
+#                 CASE
+#                     WHEN exercise_angina = 'Y' THEN 'Có'
+#                     WHEN exercise_angina = 'N' THEN 'Không'
+#                     ELSE exercise_angina
+#                 END as exercise_angina,
+#                 blood_sugar,
+#                 CASE
+#                     WHEN diagnosis = 1 THEN 'Có bệnh'
+#                     WHEN diagnosis = 0 THEN 'Không bệnh'
+#                     ELSE CAST(diagnosis AS CHAR)
+#                 END as diagnosis
+#             FROM patients_data_mining
+#             ORDER BY patient_id
+#         """
+#         cursor.execute(query)
+#         data = cursor.fetchall()
+#
+#         cursor.close()
+#         conn.close()
+#
+#         return render_template('exportpdf.html', data=data)
+#
+#     except Exception as e:
+#         return f"Lỗi khi lấy dữ liệu: {str(e)}"
+
+# Hàm kết nối cơ sở dữ liệu và lấy dữ liệu
+def fetch_data_from_db():
+    try:
+        with mysql.connector.connect(**db_config) as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    SELECT 
+                        patient_id,
+                        age, 
+                        CASE 
+                            WHEN gender = 'M' THEN 'Nam'
+                            WHEN gender = 'F' THEN 'Nữ'
+                            ELSE gender
+                        END as gender,
+                        chest_pain_type,
+                        resting_blood_pressure,
+                        cholesterol,
+                        max_heart_rate,
+                        CASE 
+                            WHEN exercise_angina = 'Y' THEN 'Có'
+                            WHEN exercise_angina = 'N' THEN 'Không'
+                            ELSE exercise_angina
+                        END as exercise_angina,
+                        blood_sugar,
+                        CASE 
+                            WHEN diagnosis = 1 THEN 'Có bệnh'
+                            WHEN diagnosis = 0 THEN 'Không bệnh'
+                            ELSE CAST(diagnosis AS CHAR)
+                        END as diagnosis
+                    FROM patients_data_mining
+                    ORDER BY patient_id
+                """
+                cursor.execute(query)
+                data = cursor.fetchall()
+        return data
+    except Exception as e:
+        raise Exception(f"Lỗi khi load dữ liệu từ db: {str(e)}")
+
+
+# Hàm để mã hóa và chuẩn hóa đặc trưng cho từng bệnh nhân
+def prepare_features(row):
+    model = joblib.load('model/heart_disease_rf_model.joblib')
+    scaler = joblib.load('model/heart_disease_scaler.joblib')
+    patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol, max_heart_rate, exercise_angina, blood_sugar, diagnosis = row
+    gender_encoded = 1 if gender == 'Nam' else 0
+    exercise_angina_encoded = 1 if exercise_angina == 'Có' else 0
+
+    features = pd.DataFrame([[age, gender_encoded, chest_pain_type,
+                              resting_blood_pressure, cholesterol,
+                              max_heart_rate, exercise_angina_encoded, blood_sugar]],
+                            columns=['age', 'gender', 'chest_pain_type',
+                                     'resting_blood_pressure', 'cholesterol',
+                                     'max_heart_rate', 'exercise_angina', 'blood_sugar'])
+    features_scaled = scaler.transform(features)
+    prediction = model.predict(features_scaled)[0]
+    return (patient_id, prediction, diagnosis)
+
+
+# Hàm tính toán các thông số đánh giá mô hình
+def calculate_metrics(true_labels, predicted_labels):
+    # Chuyển đổi nhãn thành 0 và 1
+    true_labels = [1 if label == 'Có bệnh' else 0 for label in true_labels]
+    predicted_labels = [1 if label == 'Có bệnh' else 0 for label in predicted_labels]
+
+    accuracy = accuracy_score(true_labels, predicted_labels)
+    precision = precision_score(true_labels, predicted_labels, average='binary', pos_label=1)
+    recall = recall_score(true_labels, predicted_labels, average='binary', pos_label=1)
+    f1 = f1_score(true_labels, predicted_labels, average='binary', pos_label=1)
+    cm = confusion_matrix(true_labels, predicted_labels)
+
+    return accuracy, precision, recall, f1, cm
+
+
+# Hàm chuyển đổi ma trận nhầm lẫn thành DataFrame
+def convert_cm_to_df(cm):
+    if cm.shape == (1, 1):
+        cm_df = pd.DataFrame(cm, columns=["Predicted"], index=["True"])
+    elif cm.shape == (1, 2):
+        cm_df = pd.DataFrame(cm, columns=["Predicted Negative", "Predicted Positive"], index=["True"])
+    elif cm.shape == (2, 1):
+        cm_df = pd.DataFrame(cm, columns=["Predicted"], index=["True Negative", "True Positive"])
+    else:
+        cm_df = pd.DataFrame(cm, columns=["Predicted Negative", "Predicted Positive"],
+                             index=["True Negative", "True Positive"])
+    return cm_df
+
+
+# Route chính để xử lý và render template
+@app.route('/exportpdf')
 def test_export_pdf():
     try:
-        # Kết nối database
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor()
+        # Lấy dữ liệu từ cơ sở dữ liệu
+        data = fetch_data_from_db()
 
-        # Truy vấn dữ liệu
-        query = """
-            SELECT 
-                patient_id,
-                age, 
-                CASE 
-                    WHEN gender = 'M' THEN 'Nam'
-                    WHEN gender = 'F' THEN 'Nữ'
-                    ELSE gender
-                END as gender,
-                chest_pain_type,
-                resting_blood_pressure,
-                cholesterol,
-                max_heart_rate,
-                CASE 
-                    WHEN exercise_angina = 'Y' THEN 'Có'
-                    WHEN exercise_angina = 'N' THEN 'Không'
-                    ELSE exercise_angina
-                END as exercise_angina,
-                blood_sugar,
-                CASE 
-                    WHEN diagnosis = 1 THEN 'Có bệnh'
-                    WHEN diagnosis = 0 THEN 'Không bệnh'
-                    ELSE CAST(diagnosis AS CHAR)
-                END as diagnosis
-            FROM patients_data_mining
-            ORDER BY patient_id
-        """
-        cursor.execute(query)
-        data = cursor.fetchall()
+        # Xử lý dữ liệu cho tất cả bệnh nhân
+        results = [prepare_features(row) for row in data]
 
-        cursor.close()
-        conn.close()
+        # Tính toán các thông số đánh giá mô hình
+        true_labels = [row[2] for row in data]  # Lấy thông tin diagnosis thực tế từ dữ liệu
+        predicted_labels = [result[1] for result in results]  # Lấy dự đoán từ kết quả
 
-        return render_template('test_export_pdf.html', data=data)
+        # Tính toán các chỉ số đánh giá mô hình
+        accuracy, precision, recall, f1, cm = calculate_metrics(true_labels, predicted_labels)
+
+        # Chuyển đổi ma trận nhầm lẫn thành DataFrame
+        cm_df = convert_cm_to_df(cm)
+
+        # Render template với dữ liệu và các thông số đánh giá
+        return render_template('exportpdf.html', data=results, accuracy=accuracy, precision=precision,
+                               recall=recall, f1=f1, cm=cm_df.to_html())
 
     except Exception as e:
         return f"Lỗi khi lấy dữ liệu: {str(e)}"
+
+
 # Cấu hình kết nối MySQL
 db_config = {
     'host': 'localhost',
@@ -346,6 +532,7 @@ def preprocess_data(data):
     data['gender'] = data['gender'].map({'M': 1, 'F': 0})
     data['exercise_angina'] = data['exercise_angina'].map({'Y': 1, 'N': 0})
     return data
+
 
 def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
                max_heart_rate, exercise_angina, blood_sugar, diagnosis):
@@ -378,6 +565,7 @@ def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol
         cursor.close()
         conn.close()
 
+
 def load_data_from_db():
     """Lấy dữ liệu từ cơ sở dữ liệu"""
     try:
@@ -408,6 +596,7 @@ def load_data_from_db():
         cursor.close()
         conn.close()
 
+
 def train_model(data):
     """Huấn luyện mô hình Random Forest"""
     try:
@@ -428,7 +617,7 @@ def train_model(data):
         X_test_scaled = scaler.transform(X_test)
 
         # Huấn luyện mô hình Random Forest
-        model = RandomForestClassifier(n_estimators=100, random_state=42,max_depth=5)
+        model = RandomForestClassifier(n_estimators=100, random_state=42, max_depth=5)
         model.fit(X_train_scaled, y_train)
 
         # Dự đoán và đánh giá
@@ -515,13 +704,17 @@ def predict_heart():
     # Nếu phương thức là GET, hiển thị form
     return render_template('predict.html')
 
+
 # Khởi tạo mô hình ban đầu khi ứng dụng chạy
 def init_model():
     data = load_data_from_db()
     train_model(data)
 
+
 # Gọi hàm khởi tạo mô hình
 init_model()
+
+
 def perform_kmeans_clustering(data):
     """Thực hiện phân cụm KMeans trên dữ liệu"""
     X = data[['age', 'cholesterol']]  # Sử dụng tuổi và cholesterol cho việc phân cụm
@@ -532,8 +725,8 @@ def perform_kmeans_clustering(data):
     data['cluster'] = kmeans.fit_predict(X_scaled)
 
     return data
+
+
 # Chạy ứng dụng Flask
 if __name__ == '__main__':
     app.run(debug=True)
-
-

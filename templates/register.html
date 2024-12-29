@@ -4,12 +4,12 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Registration or Sign Up form in HTML CSS | CodingLab </title>
+    <title> Đăng kí </title>
     <link rel="stylesheet" href="../static/register.css">
    </head>
 <body>
   <div class="wrapper">
-    <h2>Registration</h2>
+    <h2>Đăng kí</h2>
     <form action="{{ url_for('register')}}"  method="post">
 {#      <div class="input-box">#}
 {#        <input type="file" placeholder="Enter your avatar" required>#}
@@ -28,10 +28,10 @@
 {#        <h3>I accept all terms & condition</h3>#}
 {#      </div>#}
       <div class="input-box button">
-        <input type="Submit" value="Register Now">
+        <input type="Submit" value="Đăng kí ngay">
       </div>
       <div class="text">
-        <h3>Already have an account? <a href="{{ url_for('login') }}">Login now</a></h3>
+        <h3>Đã có tài khoản? <a href="{{ url_for('login') }}">Đăng nhập ngay</a></h3>
       </div>
     </form>
   </div>

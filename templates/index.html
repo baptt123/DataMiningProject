@@ -2,82 +2,111 @@
 {% block title %}Home{% endblock %}
 
 {% block body %}
-<!-- Page Header-->
-<header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/heart5.jpg') }}')">
-    <div class="container position-relative px-4 px-lg-5">
-        <div class="row gx-4 gx-lg-5 justify-content-center">
-            <div class="col-md-12 col-lg-10 col-xl-8">
-                <div class="site-heading">
-{#                    <h1>{{ params['blog_name'] }}</h1>#}
-                    <span class="subheading">Heart Failure Prediction System</span>
+    <!-- Page Header-->
+    <header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/heart5.jpg') }}')">
+        <div class="container position-relative px-4 px-lg-5">
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-md-12 col-lg-10 col-xl-8">
+                    <div class="site-heading">
+                        {#                    <h1>{{ params['blog_name'] }}</h1>#}
+                        <span class="subheading">Dự đoán bệnh tim</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</header>
+    </header>
 
-<!-- Main Content-->
-<div class="container px-4 px-lg-5">
-    <div class="row gx-4 gx-lg-5 justify-content-center">
-        <div class="col-md-10 col-lg-12 col-xl-11">
-            <!-- TODO: Fetch it using for loop from the database -->
-            <!-- Content section 1-->
-            <section id="scroll">
-                <div class="container px-5">
-                    <div class="row gx-5 align-items-center">
-                        <div class="col-lg-6 order-lg-2">
-                            <div class="p-5">
-                                <img class="img-fluid rounded-circle" src="{{ url_for('static', filename='assets1/assets/img/heart8.jpg') }}" alt="..." />
+    <!-- Main Content-->
+    <div class="container px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-12 col-xl-11">
+                <!-- TODO: Fetch it using for loop from the database -->
+                <!-- Content section 1-->
+                <section id="scroll">
+                    <div class="container px-5">
+                        <div class="row gx-5 align-items-center">
+                            <div class="col-lg-6 order-lg-2">
+                                <div class="p-5">
+                                    <img class="img-fluid rounded-circle"
+                                         src="{{ url_for('static', filename='assets1/assets/img/heart8.jpg') }}"
+                                         alt="..."/>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-lg-6 order-lg-1">
-                            <div class="p-5">
-                                <h2 class="display-4">Analysis Of Current For Heart Disease!</h2>
-                                <p>In the current era, deaths due to heart disease have become a major issue. Approximately one person dies per minute due to heart disease. Data is generated and has to be stored daily because of fast growth in Information Technology. The data which is collected is converted into knowledge by data analysis using various combinations of algorithms. Healthcare professionals working in the area of cardiac disease have their own limits and cannot forecast the probability of high accuracy in cardiac disease. This paper aims to improve heart disease prediction accuracy using the Logistic Regression model of machine learning, considering the healthcare dataset which classifies patients whether they are having heart diseases or not according to the information in the record.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <!-- Content section 2-->
-            <section>
-                <div class="container px-5">
-                    <div class="row gx-5 align-items-center">
-                        <div class="col-lg-6">
-                            <div class="p-5">
-                                <img class="img-fluid rounded-circle" src="{{ url_for('static', filename='assets1/assets/img/heart6.jpg') }}" alt="..." />
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="p-5">
-                                <h2 class="display-4">Medical Survey From Professionals.</h2>
-                                <p>There are many works in literature which diagnose heart diseases using machine learning as well as data mining. A brief survey of that is presented here. A paper named ‘A study of cardiac disease using M's approach to machine learning and analytics.’ On September 2018, Marimuthu, M. Abinaya, K.S. Hariesh, K. Mandhankumar, and V. Pavithra released their work. The result shows that, through the literature survey, they concluded models to increase the accuracy of prediction of heart diseases.</p>
+                            <div class="col-lg-6 order-lg-1">
+                                <div class="p-5">
+                                    <h2 class="display-4">Website dự đoán bệnh tim</h2>
+                                    <p>Trong thời đại hiện nay, số ca tử vong do bệnh tim đã trở thành một vấn đề lớn.
+                                        Khoảng một người tử vong mỗi phút do bệnh tim. Dữ liệu được tạo ra và phải được
+                                        lưu trữ hàng ngày do sự phát triển nhanh chóng của Công nghệ Thông tin. Dữ liệu
+                                        thu thập được chuyển đổi thành kiến thức thông qua phân tích dữ liệu bằng cách
+                                        sử dụng các tổ hợp thuật toán khác nhau. Các chuyên gia y tế làm việc trong lĩnh
+                                        vực bệnh tim có giới hạn của họ và không thể dự đoán xác suất chính xác cao
+                                        trong bệnh tim. Bài báo này nhằm cải thiện độ chính xác trong việc dự đoán bệnh
+                                        tim bằng cách sử dụng mô hình Rừng Ngẫu Nhiên (Random Forest) của học máy, dựa
+                                        trên tập dữ liệu y tế phân loại bệnh nhân xem họ có mắc bệnh tim hay không theo
+                                        thông tin trong hồ sơ.</p></div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
-            <!-- Content section 3-->
-            <section>
-                <div class="container px-5">
-                    <div class="row gx-5 align-items-center">
-                        <div class="col-lg-6 order-lg-2">
-                            <div class="p-5">
-                                <img class="img-fluid rounded-circle" src="{{ url_for('static', filename='assets1/assets/img/heart7.jpg') }}" alt="..." />
+                </section>
+                <!-- Content section 2-->
+                <section>
+                    <div class="container px-5">
+                        <div class="row gx-5 align-items-center">
+                            <div class="col-lg-6">
+                                <div class="p-5">
+                                    <img class="img-fluid rounded-circle"
+                                         src="{{ url_for('static', filename='assets1/assets/img/heart6.jpg') }}"
+                                         alt="..."/>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-lg-6 order-lg-1">
-                            <div class="p-5">
-                                <h2 class="display-4">Our System!!</h2>
-                                <p>This proposed system has data which classifies if patients have heart disease or not according to some parameters. This proposed system can try to use this data to create a model that tries to predict (reading data and data exploration) if a patient has this disease or not.
-                                    In this proposed system, using a Random Forest (Decision Tree) algorithm, we use Decision Trees to calculate the score. RandomSearch is a technique where random combinations of the hyperparameters are used to find the best solution for the built model. Finally, analyzing the results with the help of comparing models and decision trees.
-                                    From the data we are having, it is classified into different structured data based on the features of the patient heart. From the availability of the data, we have to create a model that predicts the patients’ disease using a Random Forest algorithm.</p>
+                            <div class="col-lg-6">
+                                <div class="p-5">
+                                    <h2 class="display-4">Khảo Sát Y Tế Từ Các Chuyên Gia.</h2>
+                                    <p>Có nhiều nghiên cứu trong tài liệu chẩn đoán bệnh tim bằng cách sử dụng học máy
+                                        cũng như khai phá dữ liệu. Một khảo sát ngắn gọn về vấn đề này được trình bày
+                                        tại đây. Một bài báo có tên ‘Nghiên cứu về bệnh tim sử dụng phương pháp học máy
+                                        và phân tích của M.’ Vào tháng 9 năm 2018, Marimuthu, M. Abinaya, K.S. Hariesh,
+                                        K. Mandhankumar và V. Pavithra đã công bố công trình của họ. Kết quả cho thấy,
+                                        thông qua khảo sát tài liệu, họ đã kết luận rằng các mô hình có thể giúp tăng độ
+                                        chính xác trong việc dự đoán bệnh tim.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
+                <!-- Content section 3-->
+                <section>
+                    <div class="container px-5">
+                        <div class="row gx-5 align-items-center">
+                            <div class="col-lg-6 order-lg-2">
+                                <div class="p-5">
+                                    <img class="img-fluid rounded-circle"
+                                         src="{{ url_for('static', filename='assets1/assets/img/heart7.jpg') }}"
+                                         alt="..."/>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 order-lg-1">
+                                <div class="p-5">
+                                    <h2 class="display-4">Hệ Thống Của Chúng Tôi!!</h2>
+                                    <p>Hệ thống đề xuất này có dữ liệu phân loại bệnh nhân có mắc bệnh tim hay không dựa
+                                        trên một số tham số. Hệ thống này có thể sử dụng dữ liệu để tạo ra một mô hình
+                                        nhằm dự đoán (đọc và khám phá dữ liệu) liệu bệnh nhân có mắc bệnh tim hay không.
+                                        Trong hệ thống đề xuất này, sử dụng thuật toán Rừng Ngẫu Nhiên (Cây Quyết Định),
+                                        chúng tôi sử dụng các Cây Quyết Định để tính điểm. RandomSearch là một kỹ thuật
+                                        trong đó các tổ hợp ngẫu nhiên của các siêu tham số được sử dụng để tìm giải
+                                        pháp tốt nhất cho mô hình được xây dựng. Cuối cùng, phân tích kết quả bằng cách
+                                        so sánh các mô hình và cây quyết định.
+                                        Từ dữ liệu thu thập được, nó được phân loại thành các dữ liệu có cấu trúc khác
+                                        nhau dựa trên các đặc điểm của tim bệnh nhân. Từ dữ liệu hiện có, chúng tôi phải
+                                        tạo ra một mô hình dự đoán bệnh của bệnh nhân bằng cách sử dụng thuật toán Rừng
+                                        Ngẫu Nhiên.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </div>
     </div>
-</div>
 {% endblock %}
