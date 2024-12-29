@@ -1,0 +1,112 @@
+{% extends "layout.html" %}
+{% block title %}Home{% endblock %}
+
+{% block body %}
+    <!-- Page Header-->
+    <header class="masthead" style="background-image: url('{{ url_for('static', filename='assets/img/heart5.jpg') }}')">
+        <div class="container position-relative px-4 px-lg-5">
+            <div class="row gx-4 gx-lg-5 justify-content-center">
+                <div class="col-md-12 col-lg-10 col-xl-8">
+                    <div class="site-heading">
+                        {#                    <h1>{{ params['blog_name'] }}</h1>#}
+                        <span class="subheading">Dự đoán bệnh tim</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content-->
+    <div class="container px-4 px-lg-5">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-md-10 col-lg-12 col-xl-11">
+                <!-- TODO: Fetch it using for loop from the database -->
+                <!-- Content section 1-->
+                <section id="scroll">
+                    <div class="container px-5">
+                        <div class="row gx-5 align-items-center">
+                            <div class="col-lg-6 order-lg-2">
+                                <div class="p-5">
+                                    <img class="img-fluid rounded-circle"
+                                         src="{{ url_for('static', filename='assets1/assets/img/heart8.jpg') }}"
+                                         alt="..."/>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 order-lg-1">
+                                <div class="p-5">
+                                    <h2 class="display-4">Website dự đoán bệnh tim</h2>
+                                    <p>Trong thời đại hiện nay, số ca tử vong do bệnh tim đã trở thành một vấn đề lớn.
+                                        Khoảng một người tử vong mỗi phút do bệnh tim. Dữ liệu được tạo ra và phải được
+                                        lưu trữ hàng ngày do sự phát triển nhanh chóng của Công nghệ Thông tin. Dữ liệu
+                                        thu thập được chuyển đổi thành kiến thức thông qua phân tích dữ liệu bằng cách
+                                        sử dụng các tổ hợp thuật toán khác nhau. Các chuyên gia y tế làm việc trong lĩnh
+                                        vực bệnh tim có giới hạn của họ và không thể dự đoán xác suất chính xác cao
+                                        trong bệnh tim. Bài báo này nhằm cải thiện độ chính xác trong việc dự đoán bệnh
+                                        tim bằng cách sử dụng mô hình Rừng Ngẫu Nhiên (Random Forest) của học máy, dựa
+                                        trên tập dữ liệu y tế phân loại bệnh nhân xem họ có mắc bệnh tim hay không theo
+                                        thông tin trong hồ sơ.</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Content section 2-->
+                <section>
+                    <div class="container px-5">
+                        <div class="row gx-5 align-items-center">
+                            <div class="col-lg-6">
+                                <div class="p-5">
+                                    <img class="img-fluid rounded-circle"
+                                         src="{{ url_for('static', filename='assets1/assets/img/heart6.jpg') }}"
+                                         alt="..."/>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="p-5">
+                                    <h2 class="display-4">Khảo Sát Y Tế Từ Các Chuyên Gia.</h2>
+                                    <p>Có nhiều nghiên cứu trong tài liệu chẩn đoán bệnh tim bằng cách sử dụng học máy
+                                        cũng như khai phá dữ liệu. Một khảo sát ngắn gọn về vấn đề này được trình bày
+                                        tại đây. Một bài báo có tên ‘Nghiên cứu về bệnh tim sử dụng phương pháp học máy
+                                        và phân tích của M.’ Vào tháng 9 năm 2018, Marimuthu, M. Abinaya, K.S. Hariesh,
+                                        K. Mandhankumar và V. Pavithra đã công bố công trình của họ. Kết quả cho thấy,
+                                        thông qua khảo sát tài liệu, họ đã kết luận rằng các mô hình có thể giúp tăng độ
+                                        chính xác trong việc dự đoán bệnh tim.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Content section 3-->
+                <section>
+                    <div class="container px-5">
+                        <div class="row gx-5 align-items-center">
+                            <div class="col-lg-6 order-lg-2">
+                                <div class="p-5">
+                                    <img class="img-fluid rounded-circle"
+                                         src="{{ url_for('static', filename='assets1/assets/img/heart7.jpg') }}"
+                                         alt="..."/>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 order-lg-1">
+                                <div class="p-5">
+                                    <h2 class="display-4">Hệ Thống Của Chúng Tôi!!</h2>
+                                    <p>Hệ thống đề xuất này có dữ liệu phân loại bệnh nhân có mắc bệnh tim hay không dựa
+                                        trên một số tham số. Hệ thống này có thể sử dụng dữ liệu để tạo ra một mô hình
+                                        nhằm dự đoán (đọc và khám phá dữ liệu) liệu bệnh nhân có mắc bệnh tim hay không.
+                                        Trong hệ thống đề xuất này, sử dụng thuật toán Rừng Ngẫu Nhiên (Cây Quyết Định),
+                                        chúng tôi sử dụng các Cây Quyết Định để tính điểm. RandomSearch là một kỹ thuật
+                                        trong đó các tổ hợp ngẫu nhiên của các siêu tham số được sử dụng để tìm giải
+                                        pháp tốt nhất cho mô hình được xây dựng. Cuối cùng, phân tích kết quả bằng cách
+                                        so sánh các mô hình và cây quyết định.
+                                        Từ dữ liệu thu thập được, nó được phân loại thành các dữ liệu có cấu trúc khác
+                                        nhau dựa trên các đặc điểm của tim bệnh nhân. Từ dữ liệu hiện có, chúng tôi phải
+                                        tạo ra một mô hình dự đoán bệnh của bệnh nhân bằng cách sử dụng thuật toán Rừng
+                                        Ngẫu Nhiên.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+{% endblock %}
