@@ -236,6 +236,8 @@
             <option value="F">Nữ</option>
         </select>
 
+        <label for="full_name">Họ và tên</label>
+        <input type="text" id="full_name" name="full_name" required>
         <label for="chest_pain_type">Loại đau ngực (1-4):</label>
         <input type="number" id="chest_pain_type" name="chest_pain_type" required min="1" max="4">
 
@@ -277,6 +279,7 @@
                 // Thu thập dữ liệu từ form
                 let formData = {
                     age: $('#age').val(),
+                    fullname:$('#full_name').val(),
                     gender: $('#gender').val(),
                     chest_pain_type: $('#chest_pain_type').val(),
                     resting_blood_pressure: $('#resting_blood_pressure').val(),
@@ -316,7 +319,7 @@
     let cholesterol = document.getElementById("cholesterol").value;
     let max_heart_rate = document.getElementById("max_heart_rate").value;
     let blood_sugar = document.getElementById("blood_sugar").value;
-
+    let full_name=document.getElementById("full_name").value;
     let errorMessage = "";
 
     // Kiểm tra từng điều kiện
@@ -335,7 +338,11 @@
     if (blood_sugar < 0 || blood_sugar > 1) {
         errorMessage += "Đường huyết phải là 0 hoặc 1.\n";
     }
-
+    if(full_name.trim()===''){
+        errorMessage+="Họ và tên không được để dấu cách"
+    }else{
+        errorMessage+="Họ và tên không được để trống"
+    }
     // Hiển thị hoặc ẩn thông báo lỗi
     if (errorMessage) {
         document.getElementById("error").innerText = errorMessage;

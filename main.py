@@ -16,7 +16,7 @@ from sklearn.preprocessing import StandardScaler
 restricted_routes = ['/chart', '/exportpdf', '/datapatient']
 # Biến toàn cục để lưu mô hình và scaler
 global model, scaler
-app = Flask(__name__)
+app = Flask(__name__,static_folder='static')
 app.secret_key = 'your_secret_key'  # Thay bằng một chuỗi bí mật để dùng với session
 
 
@@ -26,8 +26,12 @@ def check_admin():
     if request.path in restricted_routes:
         # Kiểm tra nếu session có chứa username và role là admin
         if 'username' not in session or session.get('role') != 'admin':
-            flash('You must be an admin to access this page.', 'danger')
-            return redirect(url_for('login'))  # Chuyển hướng về trang đăng nhập
+            flash('Bạn phải có quyền admin hoặc phải đăng nhập mói được phép truy cập', 'danger')
+            return redirect(url_for('role'))  # Chuyển hướng về trang đăng nhập
+        if 'username' not in session or session.get('role') =='user':
+            return redirect(url_for('index'))
+
+
 
 
 # # Phân quyền đăng nhập
@@ -156,7 +160,7 @@ def datapatient():
 
     # Truy vấn dữ liệu từ database
     query = """
-         SELECT age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
+         SELECT patient_id,fullname,age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
                 max_heart_rate, exercise_angina, blood_sugar, diagnosis
          FROM patients_data_mining
      """
@@ -401,8 +405,7 @@ def logout():
 #
 #     except Exception as e:
 #         return f"Lỗi khi lấy dữ liệu: {str(e)}"
-
-# Hàm kết nối cơ sở dữ liệu và lấy dữ liệu
+# Lấy dữ liệu từ cơ sở dữ liệu
 def fetch_data_from_db():
     try:
         with mysql.connector.connect(**db_config) as conn:
@@ -426,11 +429,7 @@ def fetch_data_from_db():
                             ELSE exercise_angina
                         END as exercise_angina,
                         blood_sugar,
-                        CASE 
-                            WHEN diagnosis = 1 THEN 'Có bệnh'
-                            WHEN diagnosis = 0 THEN 'Không bệnh'
-                            ELSE CAST(diagnosis AS CHAR)
-                        END as diagnosis
+                        diagnosis
                     FROM patients_data_mining
                     ORDER BY patient_id
                 """
@@ -440,16 +439,19 @@ def fetch_data_from_db():
     except Exception as e:
         raise Exception(f"Lỗi khi load dữ liệu từ db: {str(e)}")
 
-
-# Hàm để mã hóa và chuẩn hóa đặc trưng cho từng bệnh nhân
+# Chuẩn bị đặc trưng cho từng bệnh nhân và dự đoán
 def prepare_features(row):
     model = joblib.load('model/heart_disease_rf_model.joblib')
     scaler = joblib.load('model/heart_disease_scaler.joblib')
+
     patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol, max_heart_rate, exercise_angina, blood_sugar, diagnosis = row
     gender_encoded = 1 if gender == 'Nam' else 0
     exercise_angina_encoded = 1 if exercise_angina == 'Có' else 0
 
-    features = pd.DataFrame([[age, gender_encoded, chest_pain_type,
+    # Bạn có thể cần phải mã hóa thêm chest_pain_type nếu cần
+    chest_pain_type_encoded = chest_pain_type  # Thay đổi mã hóa tùy theo cách bạn lưu trữ giá trị này
+
+    features = pd.DataFrame([[age, gender_encoded, chest_pain_type_encoded,
                               resting_blood_pressure, cholesterol,
                               max_heart_rate, exercise_angina_encoded, blood_sugar]],
                             columns=['age', 'gender', 'chest_pain_type',
@@ -457,64 +459,57 @@ def prepare_features(row):
                                      'max_heart_rate', 'exercise_angina', 'blood_sugar'])
     features_scaled = scaler.transform(features)
     prediction = model.predict(features_scaled)[0]
-    return (patient_id, prediction, diagnosis)
+    return {
+        'patient_id': patient_id,
+        'age': age,
+        'gender': gender,
+        'chest_pain_type': chest_pain_type,
+        'resting_blood_pressure': resting_blood_pressure,
+        'cholesterol': cholesterol,
+        'max_heart_rate': max_heart_rate,
+        'exercise_angina': exercise_angina,
+        'blood_sugar': blood_sugar,
+        'prediction': int(prediction),
+        'diagnosis': diagnosis
+    }
 
-
-# Hàm tính toán các thông số đánh giá mô hình
+# Tính toán các thông số đánh giá
 def calculate_metrics(true_labels, predicted_labels):
-    # Chuyển đổi nhãn thành 0 và 1
-    true_labels = [1 if label == 'Có bệnh' else 0 for label in true_labels]
-    predicted_labels = [1 if label == 'Có bệnh' else 0 for label in predicted_labels]
-
     accuracy = accuracy_score(true_labels, predicted_labels)
-    precision = precision_score(true_labels, predicted_labels, average='binary', pos_label=1)
-    recall = recall_score(true_labels, predicted_labels, average='binary', pos_label=1)
-    f1 = f1_score(true_labels, predicted_labels, average='binary', pos_label=1)
+    precision = precision_score(true_labels, predicted_labels, average='binary', pos_label=1, zero_division=0)
+    recall = recall_score(true_labels, predicted_labels, average='binary', pos_label=1, zero_division=0)
+    f1 = f1_score(true_labels, predicted_labels, average='binary', pos_label=1, zero_division=0)
     cm = confusion_matrix(true_labels, predicted_labels)
 
     return accuracy, precision, recall, f1, cm
 
-
-# Hàm chuyển đổi ma trận nhầm lẫn thành DataFrame
+# Chuyển ma trận nhầm lẫn thành DataFrame
 def convert_cm_to_df(cm):
-    if cm.shape == (1, 1):
-        cm_df = pd.DataFrame(cm, columns=["Predicted"], index=["True"])
-    elif cm.shape == (1, 2):
-        cm_df = pd.DataFrame(cm, columns=["Predicted Negative", "Predicted Positive"], index=["True"])
-    elif cm.shape == (2, 1):
-        cm_df = pd.DataFrame(cm, columns=["Predicted"], index=["True Negative", "True Positive"])
-    else:
-        cm_df = pd.DataFrame(cm, columns=["Predicted Negative", "Predicted Positive"],
-                             index=["True Negative", "True Positive"])
+    cm_df = pd.DataFrame(cm, columns=["Predicted Negative", "Predicted Positive"],
+                         index=["True Negative", "True Positive"])
     return cm_df
 
-
-# Route chính để xử lý và render template
+# Route chính để xuất báo cáo PDF
 @app.route('/exportpdf')
 def test_export_pdf():
     try:
-        # Lấy dữ liệu từ cơ sở dữ liệu
         data = fetch_data_from_db()
-
-        # Xử lý dữ liệu cho tất cả bệnh nhân
         results = [prepare_features(row) for row in data]
 
-        # Tính toán các thông số đánh giá mô hình
-        true_labels = [row[2] for row in data]  # Lấy thông tin diagnosis thực tế từ dữ liệu
-        predicted_labels = [result[1] for result in results]  # Lấy dự đoán từ kết quả
+        true_labels = [row['diagnosis'] for row in results]  # Lấy nhãn thực tế
+        predicted_labels = [row['prediction'] for row in results]  # Lấy nhãn dự đoán
 
-        # Tính toán các chỉ số đánh giá mô hình
         accuracy, precision, recall, f1, cm = calculate_metrics(true_labels, predicted_labels)
-
-        # Chuyển đổi ma trận nhầm lẫn thành DataFrame
         cm_df = convert_cm_to_df(cm)
 
-        # Render template với dữ liệu và các thông số đánh giá
-        return render_template('exportpdf.html', data=results, accuracy=accuracy, precision=precision,
-                               recall=recall, f1=f1, cm=cm_df.to_html())
-
+        return render_template('exportpdf.html', data=results, accuracy=accuracy,
+                               precision=precision, recall=recall, f1=f1, cm=cm_df.to_html())
     except Exception as e:
         return f"Lỗi khi lấy dữ liệu: {str(e)}"
+
+
+
+
 
 
 # Cấu hình kết nối MySQL
