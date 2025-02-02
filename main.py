@@ -32,8 +32,15 @@ def check_admin():
             return redirect(url_for('index'))
 
 
-
-
+#Lấy dữ liệu chẩn đoán của người dùng
+@app.route("/getdatauser/<int:user_id>", methods=['GET'])
+def getdatauser(user_id):
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
+    cursor.execute("""SELECT * from patients_data_mining LEFT JOIN users on patients_data_mining.patient_id = users.id""")
+    data = cursor.fetchall()
+    conn.close()
+    return render_template('datauser.html',jsonify(data))
 # # Phân quyền đăng nhập
 @app.route('/role', methods=['GET'])
 def role():
@@ -48,9 +55,7 @@ def welcome():
 
 @app.route('/index')
 def index():
-    # if 'username' not in session:
-    #     flash('Vui lòng đăng nhập trước.', 'warning')
-    #     return redirect(url_for('login'))
+
     return render_template('index.html')
 
 
@@ -148,9 +153,7 @@ def contact():
     return render_template('contact.html')
 
 
-# @app.route('/copy')
-# def copy():
-#     return render_template('copy.html')
+
 
 @app.route('/datapatient')
 def datapatient():
@@ -181,9 +184,7 @@ def datapatient():
     return render_template('datapatient.html', data=data, params=params)
 
 
-# @app.route('/dataset_test')
-# def dataset_test():
-#     return render_template('Dataset_test.html')
+
 
 @app.route('/description')
 def description():
@@ -224,36 +225,7 @@ def layout():
     return render_template('layout.html')
 
 
-# @app.route('/login', methods=['GET', 'POST'])
-# #Dang nhap
-# def login():
-#     if request.method == 'POST':
-#         username = request.form['username']
-#         password = request.form['password']
-#
-#         # Kết nối tới database
-#         conn = mysql.connector.connect(**db_config)
-#         cursor = conn.cursor()
-#
-#         # Kiểm tra thông tin người dùng
-#         query = "SELECT * FROM users WHERE username = %s AND password = %s"
-#         cursor.execute(query, (username, password))
-#         user = cursor.fetchone()
-#
-#         cursor.close()
-#         conn.close()
-#
-#         if user:
-#             # Đăng nhập thành công
-#             session['username'] = username
-#             flash('Đăng nhập thành công', 'success')
-#             return redirect(url_for('index'))
-#         else:
-#             # Đăng nhập thất bại
-#             flash('Thông tin đăng nhập không đúng', 'danger')
-#             return redirect(url_for('login'))
-#
-#     return render_template('login.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -287,12 +259,7 @@ def login():
     return render_template('login.html')
 
 
-# Kiểm tra trước khi vào trang thông tin bệnh nhân ở phía admin
-# @app.before_request
-# def restrict_admin_page():
-#     if request.endpoint == 'admin' and ('username' not in session or session.get('role') != 'admin'):
-#         flash('Bạn không có quyền truy cập trang admin', 'danger')
-#         return redirect(url_for('login'))
+
 # Đăng ký
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -324,12 +291,7 @@ def register():
             conn.close()
             return redirect(url_for('register'))
 
-        # Lưu file avatar
-        # if avatar.filename != '':
-        #     avatar_path = os.path.join('static/uploads', avatar.filename)
-        #     avatar.save(avatar_path)
-        # else:
-        #     avatar_path = None
+
 
         # Thêm thông tin người dùng vào database
         insert_query = """
@@ -360,51 +322,7 @@ def logout():
     return redirect(url_for('login'))
 
 
-# @app.route('/exportpdf')
-# def test_export_pdf():
-#     try:
-#         # Kết nối database
-#         conn = mysql.connector.connect(**db_config)
-#         cursor = conn.cursor()
-#
-#         # Truy vấn dữ liệu
-#         query = """
-#             SELECT
-#                 patient_id,
-#                 age,
-#                 CASE
-#                     WHEN gender = 'M' THEN 'Nam'
-#                     WHEN gender = 'F' THEN 'Nữ'
-#                     ELSE gender
-#                 END as gender,
-#                 chest_pain_type,
-#                 resting_blood_pressure,
-#                 cholesterol,
-#                 max_heart_rate,
-#                 CASE
-#                     WHEN exercise_angina = 'Y' THEN 'Có'
-#                     WHEN exercise_angina = 'N' THEN 'Không'
-#                     ELSE exercise_angina
-#                 END as exercise_angina,
-#                 blood_sugar,
-#                 CASE
-#                     WHEN diagnosis = 1 THEN 'Có bệnh'
-#                     WHEN diagnosis = 0 THEN 'Không bệnh'
-#                     ELSE CAST(diagnosis AS CHAR)
-#                 END as diagnosis
-#             FROM patients_data_mining
-#             ORDER BY patient_id
-#         """
-#         cursor.execute(query)
-#         data = cursor.fetchall()
-#
-#         cursor.close()
-#         conn.close()
-#
-#         return render_template('exportpdf.html', data=data)
-#
-#     except Exception as e:
-#         return f"Lỗi khi lấy dữ liệu: {str(e)}"
+
 # Lấy dữ liệu từ cơ sở dữ liệu
 def fetch_data_from_db():
     try:
