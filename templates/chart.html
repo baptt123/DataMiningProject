@@ -25,7 +25,63 @@
         <canvas id="correlationChart"></canvas>
     </div>
 </div>
+        <div class="row mt-5">
+    <div class="col-md-12">
+        <canvas id="importanceChart"></canvas>
     </div>
+</div>
+
+    </div>
+</section>
+<section class="container mt-5">
+    <h3 class="text-center">📋 Nhập thông tin sức khỏe để nhận khuyến nghị</h3>
+
+    <!-- Form nhập thông tin -->
+    <form id="healthForm" method="POST" action="{{ url_for('chart') }}" class="row g-3">
+        <div class="col-md-6">
+            <label for="age" class="form-label">👤 Tuổi:</label>
+            <input type="number" class="form-control" id="age" name="age" required>
+        </div>
+
+        <div class="col-md-6">
+            <label for="heart_disease" class="form-label">❤️ Tình trạng bệnh tim:</label>
+            <select class="form-select" id="heart_disease" name="heart_disease" required>
+                <option value="0">Không</option>
+                <option value="1">Có</option>
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label for="cholesterol" class="form-label">🩸 Cholesterol:</label>
+            <input type="number" class="form-control" id="cholesterol" name="cholesterol" required>
+        </div>
+
+        <div class="col-md-4">
+            <label for="bp" class="form-label">💉 Huyết áp:</label>
+            <input type="number" class="form-control" id="bp" name="bp" required>
+        </div>
+
+        <div class="col-md-4">
+            <label for="glucose" class="form-label">🍬 Đường huyết:</label>
+            <input type="number" class="form-control" id="glucose" name="glucose" required>
+        </div>
+
+        <div class="col-12 text-center mt-3">
+            <button type="submit" class="btn btn-primary">📊 Nhận khuyến nghị</button>
+        </div>
+    </form>
+
+    <!-- Kết quả khuyến nghị -->
+    {% if recommendations %}
+        <div class="mt-5">
+            <h3 class="text-center">📌 Khuyến nghị dành cho bạn</h3>
+            <ul class="list-group">
+                {% for advice in recommendations %}
+                    <li class="list-group-item">{{ advice }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 </section>
 
 <script>
@@ -187,6 +243,49 @@ var correlationChart = new Chart(correlationCtx, {
         }
     }
 });
+
+ // Dữ liệu mức độ ảnh hưởng
+    var importanceData = {{ importance_data | tojson | safe }};
+
+    var labels = importanceData.map(item => item.label);
+    var values = importanceData.map(item => item.value);
+
+    // Vẽ biểu đồ thanh thể hiện mức độ ảnh hưởng của các yếu tố rủi ro
+    var ctx = document.getElementById('importanceChart').getContext('2d');
+    var importanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Mức độ ảnh hưởng',
+                data: values,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Tầm Quan Trọng của Các Yếu Tố Rủi Ro'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Mức độ ảnh hưởng'
+                    }
+                }
+            }
+        }
+    });
 </script>
 
 {% endblock body %}

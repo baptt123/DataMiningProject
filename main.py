@@ -23,7 +23,7 @@ def index():
 @app.route('/about')
 def about():
     return render_template('about.html')
-@app.route('/chart')
+@app.route('/chart', methods=['GET', 'POST'])
 def chart():
     # Kết nối tới database
     conn = mysql.connector.connect(**db_config)
@@ -58,7 +58,28 @@ def chart():
         """)
     correlation_data = cursor.fetchall()
 
+
+    # Lấy dữ liệu bệnh tim
+    query = "SELECT age, resting_blood_pressure, cholesterol, blood_sugar, diagnosis FROM patients_data_mining"
+    cursor.execute(query)
+    data = cursor.fetchall()
     conn.close()
+
+    # Chuyển đổi dữ liệu thành DataFrame
+    df = pd.DataFrame(data, columns=["age", "bp", "cholesterol", "glucose", "diagnosis"])
+
+    # Xử lý dữ liệu cho mô hình
+    X = df[["age", "bp", "cholesterol", "glucose"]]
+    y = df["diagnosis"]
+
+    # Huấn luyện mô hình Random Forest để đánh giá tầm quan trọng
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model.fit(X, y)
+
+    # Lấy độ quan trọng của từng yếu tố
+    feature_importances = model.feature_importances_
+    factors = ["Tuổi", "Huyết Áp", "Cholesterol", "Đường Huyết"]
+    importance_data = [{"label": factors[i], "value": feature_importances[i]} for i in range(len(factors))]
 
     # Tiền xử lý dữ liệu phân cụm
     from sklearn.cluster import KMeans
@@ -91,6 +112,63 @@ def chart():
     correlation_age_cholesterol_data = [{"x": age, "y": cholesterol} for age, _, cholesterol in correlation_data]
     correlation_bp_cholesterol_data = [{"x": bp, "y": cholesterol} for _, bp, cholesterol in correlation_data]
 
+    # 💡 **Tạo danh sách khuyến nghị sức khỏe**
+    recommendations = []
+
+    if request.method == 'POST':
+        # Nhận dữ liệu từ form
+        age = int(request.form['age'])
+        heart_disease = int(request.form['heart_disease'])
+        cholesterol = int(request.form['cholesterol'])
+        bp = int(request.form['bp'])
+        glucose = int(request.form['glucose'])
+
+        # Khuyến nghị theo độ tuổi
+        recommendations.append(f"Với độ tuổi {age}:")
+        if age < 40:
+            recommendations.append("✅ Bạn còn trẻ, hãy duy trì lối sống lành mạnh để tránh nguy cơ bệnh tim sau này.")
+        elif 40 <= age < 60:
+            recommendations.append("⚠️ Tuổi trung niên, cần kiểm soát tốt sức khỏe để giảm nguy cơ bệnh tim.")
+        elif age >= 60:
+            recommendations.append("⚠️ Tuổi cao, bạn cần chú ý đến sức khỏe tim mạch và kiểm tra thường xuyên.")
+
+        # Khuyến nghị theo cholesterol
+        recommendations.append(f"\nCholesterol: {cholesterol} mg/dL")
+        if cholesterol <= 150:
+            recommendations.append("✅ Mức Cholesterol ổn định, hãy duy trì chế độ ăn uống và luyện tập lành mạnh.")
+        elif 150 < cholesterol <= 200:
+            recommendations.append("✅ Cholesterol ở mức ổn định, nhưng hãy kiểm soát chế độ ăn uống để giữ mức này.")
+        else:  # cholesterol > 200
+            recommendations.append(
+                "⚠️ Cholesterol cao, cần giảm thực phẩm chứa nhiều cholesterol như thịt đỏ, đồ chiên rán.")
+            recommendations.append("✅ Ăn nhiều rau xanh, cá hồi và uống đủ nước.")
+
+        # Khuyến nghị theo huyết áp
+        recommendations.append(f"\nHuyết áp: {bp} mmHg")
+        if bp <= 130:
+            recommendations.append(
+                "✅ Huyết áp của bạn ổn định, hãy tiếp tục duy trì thói quen ăn uống và tập thể dục lành mạnh.")
+        else:  # bp > 130
+            recommendations.append("⚠️ Huyết áp cao, hãy giảm muối và thực phẩm chế biến sẵn.")
+            recommendations.append("✅ Duy trì tập thể dục nhẹ nhàng như đi bộ hoặc yoga để kiểm soát huyết áp.")
+
+        # Khuyến nghị theo đường huyết
+        recommendations.append(f"\nĐường huyết: {glucose} mg/dL")
+        if glucose <= 140:
+            recommendations.append(
+                "✅ Đường huyết của bạn ổn định, hãy duy trì chế độ ăn uống lành mạnh và kiểm tra định kỳ.")
+        else:  # glucose > 140
+            recommendations.append("⚠️ Đường huyết cao, hãy giảm ăn đường, tránh nước ngọt có ga.")
+            recommendations.append("✅ Kiểm tra đường huyết định kỳ và ăn thực phẩm giàu chất xơ.")
+
+        # Khuyến nghị nếu bệnh tim có và các chỉ số ổn định
+        if heart_disease == 1 and (cholesterol <= 200 and bp <= 130 and glucose <= 140):
+            recommendations.append(
+                "✅ Mặc dù bạn có bệnh tim, các chỉ số hiện tại của bạn rất ổn định. Tiếp tục duy trì lối sống lành mạnh.")
+        elif heart_disease == 1 and (cholesterol > 200 or bp > 130 or glucose > 140):
+            recommendations.append(
+                "⚠️ Bạn có bệnh tim và các chỉ số không ổn định. Hãy theo dõi sức khỏe thường xuyên và tuân thủ chỉ dẫn của bác sĩ.")
+
     # Trả về dữ liệu cho template
     return render_template('chart.html',
                            heart_disease_positive=heart_disease_positive,
@@ -104,7 +182,9 @@ def chart():
                            cluster_3=cluster_3,
                            correlation_age_bp_data=correlation_age_bp_data,
                            correlation_age_cholesterol_data=correlation_age_cholesterol_data,
-                           correlation_bp_cholesterol_data=correlation_bp_cholesterol_data)
+                           correlation_bp_cholesterol_data=correlation_bp_cholesterol_data,
+                           importance_data=importance_data,
+                           recommendations=recommendations)
 
 
 @app.route('/contact')
