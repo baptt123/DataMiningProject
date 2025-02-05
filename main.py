@@ -1,16 +1,18 @@
 import os
 
 import joblib
+import numpy as np
 import pandas as pd
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import mysql.connector
+from scipy.stats import zscore
 from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score, \
     confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 # Định nghĩa danh sách các route cần kiểm tra quyền truy cập
 restricted_routes = ['/chart', '/exportpdf', '/datapatient']
@@ -444,19 +446,23 @@ def prepare_features(row):
     model = joblib.load('model/heart_disease_rf_model.joblib')
     scaler = joblib.load('model/heart_disease_scaler.joblib')
 
-    patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol, max_heart_rate, exercise_angina, blood_sugar, diagnosis = row
-    gender_encoded = 1 if gender == 'Nam' else 0
-    exercise_angina_encoded = 1 if exercise_angina == 'Có' else 0
+    (patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol, max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath,
+     fatigue, dizziness,chest_pain_frequency, heart_rate_variability,pulse_pressure, ldl_hdl_ratio,stress_level,family_history,  diagnosis) = row
+    gender_encoded = 1 if gender == 'M' else 0
+    exercise_angina_encoded = 1 if exercise_angina == 'Y' else 0
 
     # Bạn có thể cần phải mã hóa thêm chest_pain_type nếu cần
     chest_pain_type_encoded = chest_pain_type  # Thay đổi mã hóa tùy theo cách bạn lưu trữ giá trị này
 
     features = pd.DataFrame([[age, gender_encoded, chest_pain_type_encoded,
                               resting_blood_pressure, cholesterol,
-                              max_heart_rate, exercise_angina_encoded, blood_sugar]],
+                              max_heart_rate, exercise_angina_encoded, blood_sugar,shortness_of_breath,
+     fatigue, dizziness,chest_pain_frequency, heart_rate_variability,pulse_pressure, ldl_hdl_ratio,stress_level,family_history,]],
                             columns=['age', 'gender', 'chest_pain_type',
                                      'resting_blood_pressure', 'cholesterol',
-                                     'max_heart_rate', 'exercise_angina', 'blood_sugar'])
+                                     'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath', 'fatigue', 'dizziness', 'chest_pain_frequency',
+                                     'heart_rate_variability', 'pulse_pressure', 'ldl_hdl_ratio', 'stress_level', 'family_history', 'diagnosis'
+                                     ])
     features_scaled = scaler.transform(features)
     prediction = model.predict(features_scaled)[0]
     return {
@@ -469,6 +475,15 @@ def prepare_features(row):
         'max_heart_rate': max_heart_rate,
         'exercise_angina': exercise_angina,
         'blood_sugar': blood_sugar,
+        'shortness_of_breath': shortness_of_breath,
+        'fatigue': fatigue,
+        'dizziness': dizziness,
+        'chest_pain_frequency': chest_pain_frequency,
+        'heart_rate_variability': heart_rate_variability,
+        'pulse_pressure': pulse_pressure,
+        'ldl_hdl_ratio': ldl_hdl_ratio,
+        'stress_level': stress_level,
+        'family_history': family_history,
         'prediction': int(prediction),
         'diagnosis': diagnosis
     }
@@ -523,14 +538,44 @@ db_config = {
 
 def preprocess_data(data):
     """Tiền xử lý dữ liệu"""
-    # Chuyển đổi dữ liệu phân loại
+    # Xử lý các giá trị null
+    data = data.dropna()  # Đánh dấu và loại bỏ các giá trị null
+    # Kiểm tra và lọc các giá trị bất thường
+    valid_genders = {'M', 'F'}
+    data = data[data['gender'].isin(valid_genders)]  # Loại bỏ giá trị không hợp lệ
+
+    valid_yes_no = {'Y', 'N'}
+    for col in ['exercise_angina', 'family_history']:
+        data = data[data[col].isin(valid_yes_no)]  # Chỉ giữ các giá trị 'Y' hoặc 'N'
+
+    valid_levels = {
+        'blood_sugar': {'Very High', 'Normal', 'High'},
+        'shortness_of_breath': {'Severe', 'None', 'Moderate'},
+        'fatigue': {'Never', 'Sometime', 'Often'},
+        'dizziness': {'Never', 'Occasional', 'Often'}
+    }
+
+    for col, valid_set in valid_levels.items():
+        data = data[data[col].isin(valid_set)]  # Loại bỏ các giá trị ngoài danh mục hợp lệ
+    # mã hóa dữ liệu phân loại
     data['gender'] = data['gender'].map({'M': 1, 'F': 0})
     data['exercise_angina'] = data['exercise_angina'].map({'Y': 1, 'N': 0})
+    data['blood_sugar'] = data['blood_sugar'].map({'Very High': 2, 'Normal': 0, 'High': 1})
+    data['shortness_of_breath'] = data['shortness_of_breath'].map({'Severe': 2, 'None': 0, 'Moderate': 1})
+    data['fatigue']= data['fatigue'].map({'Often': 1, 'Never': 0, 'Sometime': 2})
+    data['dizziness']= data['dizziness'].map({'Never': 0, 'Occasional': 1, 'Often': 2})
+    data['family_history']=data['family_history'].map({'Y': 1, 'N': 0})
+
+    # Xử lý outlier bằng Z-score
+    numeric_cols = data.select_dtypes(include=[np.number]).columns  # Chỉ lấy các cột số
+    z_scores = np.abs(zscore(data[numeric_cols]))  # Tính Z-score
+    data = data[(z_scores < 3).all(axis=1)]  # Giữ lại các dòng có Z-score < 3
     return data
 
 
 def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
-               max_heart_rate, exercise_angina, blood_sugar, diagnosis):
+               max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath, fatigue, dizziness, chest_pain_frequency, heart_rate_variability
+                , pulse_pressure, ldl_hdl_ratio,stress_level, family_history, diagnosis):
     """Lưu dữ liệu vào cơ sở dữ liệu"""
     try:
         conn = mysql.connector.connect(**db_config)
@@ -543,12 +588,14 @@ def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol
         query = """
         INSERT INTO patients_data_mining 
         (patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol, 
-         max_heart_rate, exercise_angina, blood_sugar, diagnosis)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+         max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath, fatigue, dizziness, chest_pain_frequency, heart_rate_variability
+                , pulse_pressure, ldl_hdl_ratio,stress_level, family_history, diagnosis)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         values = (new_id, age, gender, chest_pain_type, resting_blood_pressure,
                   cholesterol, max_heart_rate, exercise_angina,
-                  blood_sugar, diagnosis)
+                  blood_sugar, shortness_of_breath, fatigue, dizziness, chest_pain_frequency, heart_rate_variability
+                , pulse_pressure, ldl_hdl_ratio,stress_level, family_history, diagnosis)
 
         cursor.execute(query, values)
         conn.commit()
@@ -569,7 +616,8 @@ def load_data_from_db():
 
         query = """
         SELECT age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
-               max_heart_rate, exercise_angina, blood_sugar, diagnosis
+               max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath, fatigue, dizziness, chest_pain_frequency, heart_rate_variability
+                , pulse_pressure, ldl_hdl_ratio,stress_level, family_history, diagnosis
         FROM patients_data_mining
         """
 
@@ -578,8 +626,11 @@ def load_data_from_db():
 
         data = pd.DataFrame(result, columns=[
             'age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
-            'cholesterol', 'max_heart_rate', 'exercise_angina',
-            'blood_sugar', 'diagnosis'
+            'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath', 'fatigue',
+            'dizziness',
+            'chest_pain_frequency', 'heart_rate_variability',
+            'pulse_pressure', 'ldl_hdl_ratio', 'stress_level',
+            'family_history', 'diagnosis'
         ])
 
         return data
@@ -600,7 +651,10 @@ def train_model(data):
 
         # Chọn đặc trưng
         X = data[['age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
-                  'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar']]
+                  'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath', 'fatigue', 'dizziness',
+                    'chest_pain_frequency', 'heart_rate_variability',
+                    'pulse_pressure', 'ldl_hdl_ratio', 'stress_level',
+                    'family_history']]
         y = data['diagnosis']
 
         # Chia tập dữ liệu
@@ -651,19 +705,32 @@ def predict_heart():
             cholesterol = int(request.form['cholesterol'])
             max_heart_rate = int(request.form['max_heart_rate'])
             exercise_angina = request.form['exercise_angina']
-            blood_sugar = int(request.form['blood_sugar'])
+            blood_sugar = (request.form['blood_sugar'])
+            shortness_of_breath  = (request.form['shortness_of_breath '])
+            fatigue = (request.form['fatigue'])
+            dizziness = (request.form['dizziness'])
+            chest_pain_frequency = int(request.form['chest_pain frequency'])
+            heart_rate_variability = int(request.form['heart_rate_variability'])
+            pulse_pressure = int(request.form['pulse_pressure'])
+            ldl_hdl_ratio = int(request.form['ldl_hdl_ratio'])
+            stress_level = int(request.form['stress_level'])
+            family_history = (request.form['family_history'])
+
 
             # Mã hóa các thuộc tính
             gender_encoded = 1 if gender == 'M' else 0
             exercise_angina_encoded = 1 if exercise_angina == 'Y' else 0
 
+
             # Chuẩn bị dữ liệu để dự đoán
             features = pd.DataFrame([[
                 age, gender_encoded, chest_pain_type, resting_blood_pressure,
-                cholesterol, max_heart_rate, exercise_angina_encoded, blood_sugar
+                cholesterol, max_heart_rate, exercise_angina_encoded, blood_sugar, shortness_of_breath, fatigue, dizziness, chest_pain_frequency,
+                heart_rate_variability, pulse_pressure, ldl_hdl_ratio, stress_level, family_history
             ]], columns=[
                 'age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
-                'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar'
+                'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath', 'fatigue', 'dizziness', 'chest_pain_frequency',
+                'heart_rate_variability', 'pulse_pressure', 'ldl_hdl_ratio', 'stress_level', 'family_history'
             ])
 
             # Chuẩn hóa đặc trưng
@@ -683,6 +750,15 @@ def predict_heart():
                 max_heart_rate=max_heart_rate,
                 exercise_angina=exercise_angina,
                 blood_sugar=blood_sugar,
+                shortness_of_breath=shortness_of_breath,
+                fatigue=fatigue,
+                dizziness=dizziness,
+                chest_pain_frequency=chest_pain_frequency,
+                heart_rate_variability=heart_rate_variability,
+                pulse_pressure=pulse_pressure,
+                ldl_hdl_ratio=ldl_hdl_ratio,
+                stress_level=stress_level,
+                family_history=family_history,
                 diagnosis=result
             )
 
