@@ -797,6 +797,111 @@ def process_blood_sugar(value):
         return 0
 
 
+#
+
+@app.route('/predict_heart', methods=['POST', 'GET'])
+# def predict_heart():
+#     try:
+#         if request.method == 'POST':
+#             # Tải mô hình và scaler
+#             model = joblib.load('model/heart_disease_rf_model.joblib')
+#             scaler = joblib.load('model/heart_disease_scaler.joblib')
+#
+#             # Lấy dữ liệu từ form
+#             age = int(request.form['age'])
+#             gender = request.form['gender']
+#             chest_pain_type = int(request.form['chest_pain_type'])
+#             resting_blood_pressure = int(request.form['resting_blood_pressure'])
+#             cholesterol = int(request.form['cholesterol'])
+#             max_heart_rate = int(request.form['max_heart_rate'])
+#             exercise_angina = request.form['exercise_angina']
+#             blood_sugar = request.form['blood_sugar']
+#             shortness_of_breath = request.form['shortness_of_breath']
+#             fatigue = request.form['fatigue']
+#             dizziness = request.form['dizziness']
+#             chest_pain_frequency = int(request.form['chest_pain_frequency'])
+#             heart_rate_variability = int(request.form['heart_rate_variability'])
+#             pulse_pressure = int(request.form['pulse_pressure'])
+#             ldl_hdl_ratio = float(request.form['ldl_hdl_ratio'])
+#             stress_level = int(request.form['stress_level'])
+#             family_history = request.form['family_history']
+#
+#             # Mã hóa các thuộc tính
+#             gender_encoded = 1 if gender == 'M' else 0
+#             exercise_angina_encoded = 1 if exercise_angina == 'Y' else 0
+#
+#             # Chuẩn bị dữ liệu để dự đoán
+#             features = pd.DataFrame([[
+#                 age, gender_encoded, chest_pain_type, resting_blood_pressure,
+#                 cholesterol, max_heart_rate, exercise_angina_encoded, blood_sugar, shortness_of_breath, fatigue,
+#                 dizziness, chest_pain_frequency,
+#                 heart_rate_variability, pulse_pressure, ldl_hdl_ratio, stress_level, family_history
+#             ]], columns=[
+#                 'age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
+#                 'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath', 'fatigue',
+#                 'dizziness', 'chest_pain_frequency',
+#                 'heart_rate_variability', 'pulse_pressure', 'ldl_hdl_ratio', 'stress_level', 'family_history'
+#             ])
+#
+#             # Chuẩn hóa đặc trưng
+#             features_scaled = scaler.transform(features)
+#
+#             # Dự đoán kết quả
+#             prediction = model.predict(features_scaled)[0]
+#             result = 1 if prediction == 1 else 0
+#
+#             # Lưu kết quả xuống cơ sở dữ liệu
+#             save_to_db(
+#                 age=age,
+#                 gender=gender,
+#                 chest_pain_type=chest_pain_type,
+#                 resting_blood_pressure=resting_blood_pressure,
+#                 cholesterol=cholesterol,
+#                 max_heart_rate=max_heart_rate,
+#                 exercise_angina=exercise_angina,
+#                 blood_sugar=blood_sugar,
+#                 shortness_of_breath=shortness_of_breath,
+#                 fatigue=fatigue,
+#                 dizziness=dizziness,
+#                 chest_pain_frequency=chest_pain_frequency,
+#                 heart_rate_variability=heart_rate_variability,
+#                 pulse_pressure=pulse_pressure,
+#                 ldl_hdl_ratio=ldl_hdl_ratio,
+#                 stress_level=stress_level,
+#                 family_history=family_history,
+#                 diagnosis=result
+#             )
+#
+#             # Huấn luyện lại mô hình với dữ liệu mới từ DB
+#             data = load_data_from_db()
+#             train_model(data)
+#
+#             # Trả kết quả về dưới dạng JSON
+#             return jsonify({'message': result})
+#
+#         # Nếu phương thức là GET, hiển thị form
+#         return render_template('predict.html')
+#
+#     except Exception as e:
+#         # Log lỗi chi tiết
+#         print(f"Error occurred: {str(e)}")
+#         # Trả lỗi cho client (có thể hiển thị chi tiết lỗi)
+#         return jsonify(
+#             {'error': 'Có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại sau. Lỗi chi tiết: ' + str(e)}), 500
+
+# === Hàm chuyển đổi giá trị sang chuỗi tiếng Anh ===
+def convert_blood_sugar(value):
+    return {1: "Normal", 2: "High", 3: "Very High", 4: "Low"}.get(value, "Unknown")
+
+def convert_shortness_of_breath(value):
+    return {1: "None", 2: "Severe", 3: "Moderate"}.get(value, "Unknown")
+
+def convert_fatigue(value):
+    return {1: "None", 2: "Sometimes", 3: "Often"}.get(value, "Unknown")
+
+def convert_dizziness(value):
+    return {1: "None", 2: "Occasional", 3: "Often"}.get(value, "Unknown")
+
 @app.route('/predict_heart', methods=['POST', 'GET'])
 def predict_heart():
     try:
@@ -813,32 +918,58 @@ def predict_heart():
             cholesterol = int(request.form['cholesterol'])
             max_heart_rate = int(request.form['max_heart_rate'])
             exercise_angina = request.form['exercise_angina']
-            blood_sugar = request.form['blood_sugar']
-            shortness_of_breath = request.form['shortness_of_breath']
-            fatigue = request.form['fatigue']
-            dizziness = request.form['dizziness']
+            blood_sugar = int(request.form['blood_sugar'])
+            shortness_of_breath = int(request.form['shortness_of_breath'])
+            fatigue = int(request.form['fatigue'])
+            dizziness = int(request.form['dizziness'])
             chest_pain_frequency = int(request.form['chest_pain_frequency'])
             heart_rate_variability = int(request.form['heart_rate_variability'])
             pulse_pressure = int(request.form['pulse_pressure'])
             ldl_hdl_ratio = float(request.form['ldl_hdl_ratio'])
             stress_level = int(request.form['stress_level'])
-            family_history = request.form['family_history']
+            family_history = int(request.form['family_history'])
+
+            # Chuyển đổi giá trị sang chuỗi tiếng Anh
+            blood_sugar_str = convert_blood_sugar(blood_sugar)
+            shortness_of_breath_str = convert_shortness_of_breath(shortness_of_breath)
+            fatigue_str = convert_fatigue(fatigue)
+            dizziness_str = convert_dizziness(dizziness)
 
             # Mã hóa các thuộc tính
             gender_encoded = 1 if gender == 'M' else 0
             exercise_angina_encoded = 1 if exercise_angina == 'Y' else 0
 
+            # === Thêm các đặc trưng tương tác ===
+            age_blood_pressure_interaction = age * resting_blood_pressure
+            cholesterol_blood_pressure_interaction = cholesterol * resting_blood_pressure
+            max_heart_rate_age_interaction = max_heart_rate / age
+            chest_pain_blood_pressure_interaction = chest_pain_type * resting_blood_pressure
+            cholesterol_diagnosis_interaction = cholesterol * family_history
+            ldl_hdl_cholesterol_interaction = ldl_hdl_ratio * cholesterol
+            stress_pain_interaction = stress_level * chest_pain_frequency
+            family_history_diagnosis_interaction = family_history * 1  # Giữ nguyên do nó đã binary
+            blood_sugar_fatigue_interaction = blood_sugar * fatigue
+            chest_pain_diagnosis_interaction = chest_pain_frequency * 1  # Giữ nguyên do nó có ý nghĩa trực tiếp
+
             # Chuẩn bị dữ liệu để dự đoán
             features = pd.DataFrame([[
-                age, gender_encoded, chest_pain_type, resting_blood_pressure,
-                cholesterol, max_heart_rate, exercise_angina_encoded, blood_sugar, shortness_of_breath, fatigue,
-                dizziness, chest_pain_frequency,
-                heart_rate_variability, pulse_pressure, ldl_hdl_ratio, stress_level, family_history
+                age, gender_encoded, chest_pain_type, resting_blood_pressure, cholesterol, max_heart_rate,
+                exercise_angina_encoded, blood_sugar, shortness_of_breath, fatigue, dizziness, chest_pain_frequency,
+                heart_rate_variability, pulse_pressure, ldl_hdl_ratio, stress_level, family_history,
+                # Thêm các đặc trưng mới
+                age_blood_pressure_interaction, cholesterol_blood_pressure_interaction, max_heart_rate_age_interaction,
+                chest_pain_blood_pressure_interaction, cholesterol_diagnosis_interaction,
+                ldl_hdl_cholesterol_interaction, stress_pain_interaction, family_history_diagnosis_interaction,
+                blood_sugar_fatigue_interaction, chest_pain_diagnosis_interaction
             ]], columns=[
-                'age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
-                'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath', 'fatigue',
-                'dizziness', 'chest_pain_frequency',
-                'heart_rate_variability', 'pulse_pressure', 'ldl_hdl_ratio', 'stress_level', 'family_history'
+                'age', 'gender', 'chest_pain_type', 'resting_blood_pressure', 'cholesterol', 'max_heart_rate',
+                'exercise_angina', 'blood_sugar', 'shortness_of_breath', 'fatigue', 'dizziness', 'chest_pain_frequency',
+                'heart_rate_variability', 'pulse_pressure', 'ldl_hdl_ratio', 'stress_level', 'family_history',
+                # Tên cột cho các đặc trưng mới
+                'age_blood_pressure_interaction', 'cholesterol_blood_pressure_interaction', 'max_heart_rate_age_interaction',
+                'chest_pain_blood_pressure_interaction', 'cholesterol_diagnosis_interaction',
+                'ldl_hdl_cholesterol_interaction', 'stress_pain_interaction', 'family_history_diagnosis_interaction',
+                'blood_sugar_fatigue_interaction', 'chest_pain_diagnosis_interaction'
             ])
 
             # Chuẩn hóa đặc trưng
@@ -850,42 +981,36 @@ def predict_heart():
 
             # Lưu kết quả xuống cơ sở dữ liệu
             save_to_db(
-                age=age,
-                gender=gender,
-                chest_pain_type=chest_pain_type,
-                resting_blood_pressure=resting_blood_pressure,
-                cholesterol=cholesterol,
-                max_heart_rate=max_heart_rate,
-                exercise_angina=exercise_angina,
-                blood_sugar=blood_sugar,
-                shortness_of_breath=shortness_of_breath,
-                fatigue=fatigue,
-                dizziness=dizziness,
-                chest_pain_frequency=chest_pain_frequency,
-                heart_rate_variability=heart_rate_variability,
-                pulse_pressure=pulse_pressure,
-                ldl_hdl_ratio=ldl_hdl_ratio,
-                stress_level=stress_level,
-                family_history=family_history,
-                diagnosis=result
+                age=age, gender=gender, chest_pain_type=chest_pain_type, resting_blood_pressure=resting_blood_pressure,
+                cholesterol=cholesterol, max_heart_rate=max_heart_rate, exercise_angina=exercise_angina,
+                blood_sugar=blood_sugar, shortness_of_breath=shortness_of_breath, fatigue=fatigue, dizziness=dizziness,
+                chest_pain_frequency=chest_pain_frequency, heart_rate_variability=heart_rate_variability,
+                pulse_pressure=pulse_pressure, ldl_hdl_ratio=ldl_hdl_ratio, stress_level=stress_level,
+                family_history=family_history, diagnosis=result
             )
 
-            # Huấn luyện lại mô hình với dữ liệu mới từ DB
+            # Huấn luyện lại mô hình với dữ liệu mới từ DB (nếu cần)
             data = load_data_from_db()
-            train_model(data)
+            if len(data) > 100:  # Tránh huấn luyện lại khi dữ liệu chưa đủ lớn
+                train_model(data)
 
             # Trả kết quả về dưới dạng JSON
-            return jsonify({'message': result})
+            return jsonify({
+                'diagnosis': result,
+                'blood_sugar': blood_sugar_str,
+                'shortness_of_breath': shortness_of_breath_str,
+                'fatigue': fatigue_str,
+                'dizziness': dizziness_str
+            })
 
         # Nếu phương thức là GET, hiển thị form
         return render_template('predict.html')
 
     except Exception as e:
-        # Log lỗi chi tiết
         print(f"Error occurred: {str(e)}")
-        # Trả lỗi cho client (có thể hiển thị chi tiết lỗi)
-        return jsonify(
-            {'error': 'Có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại sau. Lỗi chi tiết: ' + str(e)}), 500
+        return jsonify({'error': f'Có lỗi xảy ra: {str(e)}'}), 500
+
+
 
 
 # Khởi tạo mô hình ban đầu khi ứng dụng chạy
