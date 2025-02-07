@@ -52,12 +52,26 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            width: 100%;
+            width: 48%; /* Chia đôi chiều rộng */
             font-size: 16px;
+        }
+        #compareButton{
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 48%; /* Chia đôi chiều rộng */
+            font-size: 16px;
+            margin-top: 10px;
         }
 
         input[type="submit"]:hover {
             background-color: #0056b3;
+        }
+        #compareButton:hover {
+            background-color: #1e7e34;
         }
 
         .error {
@@ -129,14 +143,14 @@
 <form id="heartDiseaseForm" onsubmit="return submitForm()">
     <label for="age">Tuổi:</label>
     <input type="number" id="age" name="age" required>
-
+     <label for="full_name">Họ và tên</label>
+        <input type="text" id="full_name" name="full_name" required>
     <label for="gender">Giới tính:</label>
     <select id="gender" name="gender">
         <option value="M">Nam</option>
         <option value="F">Nữ</option>
     </select>
- <label for="full_name">Họ và tên</label>
-        <input type="text" id="full_name" name="full_name" required>
+
     <label for="chest_pain_type">Loại đau ngực (1-4):</label>
     <input type="number" id="chest_pain_type" name="chest_pain_type" required min="1" max="4">
 
@@ -203,10 +217,11 @@
     <div id="error" class="error"></div>
 
     <input type="submit" value="Dự đoán">
+    <button type="button" id="compareButton" onclick="compareData()">So sánh với cộng đồng</button>
 </form>
 
 <div id="result"></div>
-
+<div id="comparisonResult" style="margin-top: 20px; text-align: center; font-weight: bold;"></div>
 <script>
 
     function validateForm() {
@@ -266,8 +281,6 @@
         // Thu thập dữ liệu từ form
         let formData = {
             age: $('#age').val(),
-            fullname:$('#full_name').val(),
-
             gender: $('#gender').val(),
             chest_pain_type: $('#chest_pain_type').val(),
             resting_blood_pressure: $('#resting_blood_pressure').val(),
@@ -310,6 +323,8 @@
                 // Hiển thị kết quả
                 $('#result').html(response.message);
                 $('#result').css('color', ''); // Reset color để CSS class có tác dụng
+                // Clear the comparison result when a new prediction is made
+                $('#comparisonResult').html('');
             },
             error: function (xhr, status, error) {
                 // Hiển thị lỗi chi tiết hơn
@@ -326,6 +341,51 @@
 
         return false; // Ngăn gửi form mặc định
     }
+    function compareData() {
+            // Thu thập dữ liệu từ form (tương tự như trong submitForm)
+            let formData = {
+                age: $('#age').val(),
+                gender: $('#gender').val(),
+                chest_pain_type: $('#chest_pain_type').val(),
+                resting_blood_pressure: $('#resting_blood_pressure').val(),
+                cholesterol: $('#cholesterol').val(),
+                max_heart_rate: $('#max_heart_rate').val(),
+                exercise_angina: $('#exercise_angina').val(),
+                blood_sugar: $('#blood_sugar').val(),
+                shortness_of_breath: $('#shortness_of_breath').val(),
+                fatigue: $('#fatigue').val(),
+                dizziness: $('#dizziness').val(),
+                chest_pain_frequency: $('#chest_pain_frequency').val(),
+                heart_rate_variability: $('#heart_rate_variability').val(),
+                pulse_pressure: $('#pulse_pressure').val(),
+                ldl_hdl_ratio: $('#ldl_hdl_ratio').val(),
+                stress_level: $('#stress_level').val(),
+                family_history: $('#family_history').val()
+            };
+
+            $.ajax({
+                url: "{{ url_for('predict_heart') }}",
+                type: 'POST',
+                contentType: 'application/x-www-form-urlencoded',
+                data: formData,
+                success: function(response) {
+                    // Hiển thị lời khuyên so sánh
+                    let comparisonAdvice = response.message.split("<br><br>")[1];  // Lấy lời khuyên so sánh
+                     $('#comparisonResult').html(comparisonAdvice);
+                    $('#comparisonResult').css('color', 'green'); // Hoặc màu bạn muốn
+                },
+                error: function(xhr, status, error) {
+                    let errorMessage = 'Đã có lỗi xảy ra: ';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMessage += xhr.responseJSON.error;
+                    } else {
+                        errorMessage += error;
+                    }
+                    $('#comparisonResult').html(errorMessage);
+                    $('#comparisonResult').css('color', 'red');
+                }
+            });
+        }
 </script>
 <footer class="border-top">
     <div class="container px-4 px-lg-5">
