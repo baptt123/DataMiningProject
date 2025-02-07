@@ -13,12 +13,13 @@ from sklearn.metrics import accuracy_score, classification_report, precision_sco
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.model_selection import StratifiedKFold
 
 # Định nghĩa danh sách các route cần kiểm tra quyền truy cập
 restricted_routes = ['/chart', '/exportpdf', '/datapatient']
 # Biến toàn cục để lưu mô hình và scaler
 global model, scaler
-app = Flask(__name__,static_folder='static')
+app = Flask(__name__, static_folder='static')
 app.secret_key = 'your_secret_key'  # Thay bằng một chuỗi bí mật để dùng với session
 
 
@@ -30,10 +31,8 @@ def check_admin():
         if 'username' not in session or session.get('role') != 'admin':
             flash('Bạn phải có quyền admin hoặc phải đăng nhập mói được phép truy cập', 'danger')
             return redirect(url_for('role'))  # Chuyển hướng về trang đăng nhập
-        if 'username' not in session or session.get('role') =='user':
+        if 'username' not in session or session.get('role') == 'user':
             return redirect(url_for('index'))
-
-
 
 
 # # Phân quyền đăng nhập
@@ -441,13 +440,16 @@ def fetch_data_from_db():
     except Exception as e:
         raise Exception(f"Lỗi khi load dữ liệu từ db: {str(e)}")
 
+
 # Chuẩn bị đặc trưng cho từng bệnh nhân và dự đoán
 def prepare_features(row):
     model = joblib.load('model/heart_disease_rf_model.joblib')
     scaler = joblib.load('model/heart_disease_scaler.joblib')
 
-    (patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol, max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath,
-     fatigue, dizziness,chest_pain_frequency, heart_rate_variability,pulse_pressure, ldl_hdl_ratio,stress_level,family_history,  diagnosis) = row
+    (patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol, max_heart_rate, exercise_angina,
+     blood_sugar, shortness_of_breath,
+     fatigue, dizziness, chest_pain_frequency, heart_rate_variability, pulse_pressure, ldl_hdl_ratio, stress_level,
+     family_history, diagnosis) = row
     gender_encoded = 1 if gender == 'M' else 0
     exercise_angina_encoded = 1 if exercise_angina == 'Y' else 0
 
@@ -456,12 +458,15 @@ def prepare_features(row):
 
     features = pd.DataFrame([[age, gender_encoded, chest_pain_type_encoded,
                               resting_blood_pressure, cholesterol,
-                              max_heart_rate, exercise_angina_encoded, blood_sugar,shortness_of_breath,
-     fatigue, dizziness,chest_pain_frequency, heart_rate_variability,pulse_pressure, ldl_hdl_ratio,stress_level,family_history,]],
+                              max_heart_rate, exercise_angina_encoded, blood_sugar, shortness_of_breath,
+                              fatigue, dizziness, chest_pain_frequency, heart_rate_variability, pulse_pressure,
+                              ldl_hdl_ratio, stress_level, family_history, ]],
                             columns=['age', 'gender', 'chest_pain_type',
                                      'resting_blood_pressure', 'cholesterol',
-                                     'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath', 'fatigue', 'dizziness', 'chest_pain_frequency',
-                                     'heart_rate_variability', 'pulse_pressure', 'ldl_hdl_ratio', 'stress_level', 'family_history', 'diagnosis'
+                                     'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath',
+                                     'fatigue', 'dizziness', 'chest_pain_frequency',
+                                     'heart_rate_variability', 'pulse_pressure', 'ldl_hdl_ratio', 'stress_level',
+                                     'family_history', 'diagnosis'
                                      ])
     features_scaled = scaler.transform(features)
     prediction = model.predict(features_scaled)[0]
@@ -488,6 +493,7 @@ def prepare_features(row):
         'diagnosis': diagnosis
     }
 
+
 # Tính toán các thông số đánh giá
 def calculate_metrics(true_labels, predicted_labels):
     accuracy = accuracy_score(true_labels, predicted_labels)
@@ -498,11 +504,13 @@ def calculate_metrics(true_labels, predicted_labels):
 
     return accuracy, precision, recall, f1, cm
 
+
 # Chuyển ma trận nhầm lẫn thành DataFrame
 def convert_cm_to_df(cm):
     cm_df = pd.DataFrame(cm, columns=["Predicted Negative", "Predicted Positive"],
                          index=["True Negative", "True Positive"])
     return cm_df
+
 
 # Route chính để xuất báo cáo PDF
 @app.route('/exportpdf')
@@ -521,10 +529,6 @@ def test_export_pdf():
                                precision=precision, recall=recall, f1=f1, cm=cm_df.to_html())
     except Exception as e:
         return f"Lỗi khi lấy dữ liệu: {str(e)}"
-
-
-
-
 
 
 # Cấu hình kết nối MySQL
@@ -562,9 +566,9 @@ def preprocess_data(data):
     data['exercise_angina'] = data['exercise_angina'].map({'Y': 1, 'N': 0})
     data['blood_sugar'] = data['blood_sugar'].map({'Very High': 2, 'Normal': 0, 'High': 1})
     data['shortness_of_breath'] = data['shortness_of_breath'].map({'Severe': 2, 'None': 0, 'Moderate': 1})
-    data['fatigue']= data['fatigue'].map({'Often': 1, 'Never': 0, 'Sometime': 2})
-    data['dizziness']= data['dizziness'].map({'Never': 0, 'Occasional': 1, 'Often': 2})
-    data['family_history']=data['family_history'].map({'Y': 1, 'N': 0})
+    data['fatigue'] = data['fatigue'].map({'Often': 1, 'Never': 0, 'Sometime': 2})
+    data['dizziness'] = data['dizziness'].map({'Never': 0, 'Occasional': 1, 'Often': 2})
+    data['family_history'] = data['family_history'].map({'Y': 1, 'N': 0})
 
     # Xử lý outlier bằng Z-score
     numeric_cols = data.select_dtypes(include=[np.number]).columns  # Chỉ lấy các cột số
@@ -574,8 +578,9 @@ def preprocess_data(data):
 
 
 def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
-               max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath, fatigue, dizziness, chest_pain_frequency, heart_rate_variability
-                , pulse_pressure, ldl_hdl_ratio,stress_level, family_history, diagnosis):
+               max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath, fatigue, dizziness,
+               chest_pain_frequency, heart_rate_variability
+               , pulse_pressure, ldl_hdl_ratio, stress_level, family_history, diagnosis):
     """Lưu dữ liệu vào cơ sở dữ liệu"""
     try:
         conn = mysql.connector.connect(**db_config)
@@ -595,7 +600,7 @@ def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol
         values = (new_id, age, gender, chest_pain_type, resting_blood_pressure,
                   cholesterol, max_heart_rate, exercise_angina,
                   blood_sugar, shortness_of_breath, fatigue, dizziness, chest_pain_frequency, heart_rate_variability
-                , pulse_pressure, ldl_hdl_ratio,stress_level, family_history, diagnosis)
+                  , pulse_pressure, ldl_hdl_ratio, stress_level, family_history, diagnosis)
 
         cursor.execute(query, values)
         conn.commit()
@@ -643,18 +648,102 @@ def load_data_from_db():
         conn.close()
 
 
-def train_model(data):
-    """Huấn luyện mô hình Random Forest"""
+def perform_cross_validation(data):
+    """
+    Thực hiện cross-validation trên dữ liệu trước khi huấn luyện mô hình chính thức
+    """
     try:
         # Tiền xử lý dữ liệu
         data = preprocess_data(data)
 
+        # Chuẩn bị dữ liệu
+        X = data[['age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
+                  'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar',
+                  'shortness_of_breath', 'fatigue', 'dizziness',
+                  'chest_pain_frequency', 'heart_rate_variability',
+                  'pulse_pressure', 'ldl_hdl_ratio', 'stress_level',
+                  'family_history']]
+        y = data['diagnosis']
+
+        # Khởi tạo các công cụ cần thiết
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+        scaler = StandardScaler()
+        model = RandomForestClassifier(n_estimators=100, random_state=42, max_depth=5)
+
+        # Khởi tạo lists để lưu kết quả
+        accuracies = []
+        precisions = []
+        recalls = []
+        f1_scores = []
+
+        # Thực hiện cross-validation
+        for fold, (train_idx, val_idx) in enumerate(cv.split(X, y), 1):
+            # Chia dữ liệu
+            X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
+            y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
+
+            # Chuẩn hóa dữ liệu
+            X_train_scaled = scaler.fit_transform(X_train)
+            X_val_scaled = scaler.transform(X_val)
+
+            # Huấn luyện và đánh giá
+            model.fit(X_train_scaled, y_train)
+            y_pred = model.predict(X_val_scaled)
+
+            # Tính toán các metrics
+            accuracies.append(accuracy_score(y_val, y_pred))
+            precisions.append(precision_score(y_val, y_pred, zero_division=0))
+            recalls.append(recall_score(y_val, y_pred, zero_division=0))
+            f1_scores.append(f1_score(y_val, y_pred, zero_division=0))
+
+            print(f"\nKết quả fold {fold}:")
+            print(f"Accuracy: {accuracies[-1]:.3f}")
+            print(f"Precision: {precisions[-1]:.3f}")
+            print(f"Recall: {recalls[-1]:.3f}")
+            print(f"F1-score: {f1_scores[-1]:.3f}")
+
+        # Tính toán kết quả trung bình và độ lệch chuẩn
+        results = {
+            'accuracy_mean': np.mean(accuracies),
+            'accuracy_std': np.std(accuracies),
+            'precision_mean': np.mean(precisions),
+            'precision_std': np.std(precisions),
+            'recall_mean': np.mean(recalls),
+            'recall_std': np.std(recalls),
+            'f1_mean': np.mean(f1_scores),
+            'f1_std': np.std(f1_scores)
+        }
+
+        print("\nKết quả cross-validation tổng hợp:")
+        print(f"Accuracy: {results['accuracy_mean']:.3f} (±{results['accuracy_std']:.3f})")
+        print(f"Precision: {results['precision_mean']:.3f} (±{results['precision_std']:.3f})")
+        print(f"Recall: {results['recall_mean']:.3f} (±{results['recall_std']:.3f})")
+        print(f"F1-score: {results['f1_mean']:.3f} (±{results['f1_std']:.3f})")
+
+        return results
+
+    except Exception as e:
+        print(f"Lỗi khi thực hiện cross-validation: {e}")
+        return None
+
+
+def train_model(data):
+    """Huấn luyện mô hình Random Forest với cross-validation"""
+    try:
+        # Thực hiện cross-validation
+        cv_results = perform_cross_validation(data)
+
+        # Nếu kết quả cross-validation chấp nhận được, tiếp tục train mô hình
+        if cv_results is None:
+            return None, None
+
         # Chọn đặc trưng
         X = data[['age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
-                  'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath', 'fatigue', 'dizziness',
-                    'chest_pain_frequency', 'heart_rate_variability',
-                    'pulse_pressure', 'ldl_hdl_ratio', 'stress_level',
-                    'family_history']]
+                  'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath', 'fatigue',
+                  'dizziness',
+                  'chest_pain_frequency', 'heart_rate_variability',
+                  'pulse_pressure', 'ldl_hdl_ratio', 'stress_level',
+                  'family_history']]
         y = data['diagnosis']
 
         # Chia tập dữ liệu
@@ -706,7 +795,7 @@ def predict_heart():
             max_heart_rate = int(request.form['max_heart_rate'])
             exercise_angina = request.form['exercise_angina']
             blood_sugar = (request.form['blood_sugar'])
-            shortness_of_breath  = (request.form['shortness_of_breath '])
+            shortness_of_breath = (request.form['shortness_of_breath '])
             fatigue = (request.form['fatigue'])
             dizziness = (request.form['dizziness'])
             chest_pain_frequency = int(request.form['chest_pain frequency'])
@@ -716,20 +805,20 @@ def predict_heart():
             stress_level = int(request.form['stress_level'])
             family_history = (request.form['family_history'])
 
-
             # Mã hóa các thuộc tính
             gender_encoded = 1 if gender == 'M' else 0
             exercise_angina_encoded = 1 if exercise_angina == 'Y' else 0
 
-
             # Chuẩn bị dữ liệu để dự đoán
             features = pd.DataFrame([[
                 age, gender_encoded, chest_pain_type, resting_blood_pressure,
-                cholesterol, max_heart_rate, exercise_angina_encoded, blood_sugar, shortness_of_breath, fatigue, dizziness, chest_pain_frequency,
+                cholesterol, max_heart_rate, exercise_angina_encoded, blood_sugar, shortness_of_breath, fatigue,
+                dizziness, chest_pain_frequency,
                 heart_rate_variability, pulse_pressure, ldl_hdl_ratio, stress_level, family_history
             ]], columns=[
                 'age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
-                'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath', 'fatigue', 'dizziness', 'chest_pain_frequency',
+                'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath', 'fatigue',
+                'dizziness', 'chest_pain_frequency',
                 'heart_rate_variability', 'pulse_pressure', 'ldl_hdl_ratio', 'stress_level', 'family_history'
             ])
 
