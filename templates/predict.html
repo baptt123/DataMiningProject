@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon.ico') }}"/>
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
-    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet"
-          type="text/css"/>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"
-          rel="stylesheet" type="text/css"/>
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css"/>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css"/>
     <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet"/>
     <title>Dự đoán bệnh tim</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -45,7 +43,7 @@
             box-sizing: border-box; /* Đảm bảo padding không làm vượt quá kích thước */
         }
 
-        input[type="submit"] {
+        input[type="submit"], #compareButton {
             background-color: #007BFF;
             color: white;
             padding: 10px 15px;
@@ -55,23 +53,9 @@
             width: 48%; /* Chia đôi chiều rộng */
             font-size: 16px;
         }
-        #compareButton{
-            background-color: #28a745;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 48%; /* Chia đôi chiều rộng */
-            font-size: 16px;
-            margin-top: 10px;
-        }
 
-        input[type="submit"]:hover {
+        input[type="submit"]:hover, #compareButton:hover {
             background-color: #0056b3;
-        }
-        #compareButton:hover {
-            background-color: #1e7e34;
         }
 
         .error {
@@ -79,7 +63,7 @@
             font-size: 0.9em;
         }
 
-        #result {
+        #result, #comparisonResult {
             margin-top: 20px;
             text-align: center;
             font-weight: bold;
@@ -121,14 +105,9 @@
                 <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="/exportpdf">Báo cáo</a></li>
                 <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="/chart">Thống kê</a></li>
                 {% endif %}
-                {#                {% if session['role'] == 'admin' %}#}
-                {#                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="/manage-users">Quản lý người dùng</a></li>#}
-                {#                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="/admin">Trang quản trị</a></li>#}
-                {#                {% endif %}#}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle px-lg-3 py-3 py-lg-4" href="#" id="navbarDropdown"
-                       role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">
+                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         {{ session['username'] }}
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -140,11 +119,13 @@
     </div>
 </nav>
 <h2 style="text-align: center;">Dự đoán mức độ tiến triển bệnh tim</h2>
-<form id="heartDiseaseForm" onsubmit="return submitForm()">
+<form id="heartDiseaseForm">
     <label for="age">Tuổi:</label>
     <input type="number" id="age" name="age" required>
-     <label for="full_name">Họ và tên</label>
-        <input type="text" id="full_name" name="full_name" required>
+
+    <label for="full_name">Họ và tên:</label>
+    <input type="text" id="full_name" name="full_name" required>
+
     <label for="gender">Giới tính:</label>
     <select id="gender" name="gender">
         <option value="M">Nam</option>
@@ -172,57 +153,96 @@
     <label for="blood_sugar">Đường huyết cao (1: Có, 0: Không):</label>
     <input type="number" id="blood_sugar" name="blood_sugar" required min="0" max="1">
 
-    <label for="shortness_of_breath">Khó thở:</label>
-    <select id="shortness_of_breath" name="shortness_of_breath">
-        <option value="None">Không</option>
-        <option value="Mild">Nhẹ</option>
-        <option value="Moderate">Vừa</option>
-        <option value="Severe">Nặng</option>
+    <label for="data_limit">Khoảng số lượng dữ liệu để so sánh:</label>
+    <select id="data_limit" name="data_limit">
+        <option value="50">50 bản ghi</option>
+        <option value="100">100 bản ghi</option>
+        <option value="all">Tất cả</option>
     </select>
 
-    <label for="fatigue">Mệt mỏi:</label>
-    <select id="fatigue" name="fatigue">
-        <option value="Never">Không bao giờ</option>
-        <option value="Sometimes">Thỉnh thoảng</option>
-        <option value="Often">Thường xuyên</option>
-    </select>
-
-    <label for="dizziness">Chóng mặt:</label>
-    <select id="dizziness" name="dizziness">
-        <option value="Never">Không bao giờ</option>
-        <option value="Occasional">Thỉnh thoảng</option>
-        <option value="Often">Thường xuyên</option>
-    </select>
-
-    <label for="chest_pain_frequency">Tần suất đau ngực (lần/tuần):</label>
-    <input type="number" id="chest_pain_frequency" name="chest_pain_frequency" required min="0" max="7">
-
-    <label for="heart_rate_variability">Biến thiên nhịp tim (ms):</label>
-    <input type="number" id="heart_rate_variability" name="heart_rate_variability" required>
-
-    <label for="pulse_pressure">Áp lực mạch (mmHg):</label>
-    <input type="number" id="pulse_pressure" name="pulse_pressure" required>
-
-    <label for="ldl_hdl_ratio">Tỷ lệ LDL/HDL:</label>
-    <input type="number" step="0.1" id="ldl_hdl_ratio" name="ldl_hdl_ratio" required>
-
-    <label for="stress_level">Mức độ căng thẳng (1-10):</label>
-    <input type="number" id="stress_level" name="stress_level" required min="1" max="10">
-
-    <label for="family_history">Tiền sử gia đình:</label>
-    <select id="family_history" name="family_history">
-        <option value="Y">Có</option>
-        <option value="N">Không</option>
-    </select>
     <div id="error" class="error"></div>
 
     <input type="submit" value="Dự đoán">
-    <button type="button" id="compareButton" onclick="compareData()">So sánh với cộng đồng</button>
+    <button id="compareButton" type="button">So sánh với cộng đồng</button>
 </form>
 
 <div id="result"></div>
 <div id="comparisonResult" style="margin-top: 20px; text-align: center; font-weight: bold;"></div>
 <script>
+    $(document).ready(function() {
+        $('#heartDiseaseForm').on('submit', function(e) {
+            e.preventDefault(); // Ngăn chặn submit mặc định
+
+            // Thu thập dữ liệu từ form
+            let formData = {
+                age: $('#age').val(),
+                gender: $('#gender').val(),
+                chest_pain_type: $('#chest_pain_type').val(),
+                resting_blood_pressure: $('#resting_blood_pressure').val(),
+                cholesterol: $('#cholesterol').val(),
+                max_heart_rate: $('#max_heart_rate').val(),
+                exercise_angina: $('#exercise_angina').val(),
+                blood_sugar: $('#blood_sugar').val(),
+            };
+
+            // Gửi AJAX tới predict_heart
+            $.ajax({
+                url: "{{ url_for('predict_heart') }}",
+                type: 'POST',
+                contentType: 'application/x-www-form-urlencoded',
+                data: formData,
+                success: function(response) {
+                    // Hiển thị kết quả dự đoán
+                    let resultText = response.message;
+                    $('#result').html(resultText);
+                    $('#result').css('color', (response.message === "Không có nguy cơ mắc bệnh tim.") ? 'green' : 'red');
+                },
+                error: function(xhr) {
+                    $('#result').html('Đã có lỗi xảy ra: ' + xhr.responseJSON.error);
+                    $('#result').css('color', 'red');
+                }
+            });
+        });
+
+        $('#compareButton').on('click', function() {
+            // Thu thập dữ liệu từ form và khoảng số lượng
+            let formData = {
+                age: $('#age').val(),
+                gender: $('#gender').val(),
+                chest_pain_type: $('#chest_pain_type').val(),
+                resting_blood_pressure: $('#resting_blood_pressure').val(),
+                cholesterol: $('#cholesterol').val(),
+                max_heart_rate: $('#max_heart_rate').val(),
+                exercise_angina: $('#exercise_angina').val(),
+                blood_sugar: $('#blood_sugar').val(),
+                data_limit: $('#data_limit').val(), // Lấy khoảng số lượng
+            };
+
+            // Gửi AJAX tới compare_with_community
+            $.ajax({
+                url: "{{ url_for('compare_with_community') }}",
+                type: 'POST',
+                contentType: 'application/x-www-form-urlencoded',
+                data: formData,
+                success: function(response) {
+                    // Hiển thị lời khuyên so sánh
+                    let comparisonAdvice = response.message;
+                    $('#comparisonResult').html(comparisonAdvice);
+                    $('#comparisonResult').css('color', 'green');
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Đã có lỗi xảy ra: ';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMessage += xhr.responseJSON.error;
+                    } else {
+                        errorMessage += 'Lỗi không xác định';
+                    }
+                    $('#comparisonResult').html(errorMessage);
+                    $('#comparisonResult').css('color', 'red');
+                }
+            });
+        });
+    });
 
     function validateForm() {
         let age = document.getElementById("age").value;
@@ -230,11 +250,7 @@
         let cholesterol = document.getElementById("cholesterol").value;
         let max_heart_rate = document.getElementById("max_heart_rate").value;
         let blood_sugar = document.getElementById("blood_sugar").value;
-        let chest_pain_frequency = document.getElementById("chest_pain_frequency").value;
-        let heart_rate_variability = document.getElementById("heart_rate_variability").value;
-        let pulse_pressure = document.getElementById("pulse_pressure").value;
-        let ldl_hdl_ratio = document.getElementById("ldl_hdl_ratio").value;
-        let stress_level = document.getElementById("stress_level").value;
+        let full_name = document.getElementById("full_name").value;
         let errorMessage = "";
 
         // Kiểm tra từng điều kiện
@@ -253,13 +269,6 @@
         if (blood_sugar < 0 || blood_sugar > 1) {
             errorMessage += "Đường huyết phải là 0 hoặc 1.\n";
         }
-        if (chest_pain_frequency < 0 || chest_pain_frequency > 7) {
-            errorMessage += "Tần suất đau ngực phải từ 0-7.\n"
-        }
-        if (stress_level < 1 || stress_level > 10) {
-            errorMessage += "Mức độ căng thẳng phải từ 1-10.\n"
-        }
-
 
         // Hiển thị hoặc ẩn thông báo lỗi
         if (errorMessage) {
@@ -272,149 +281,6 @@
             return true;
         }
     }
-
-    function submitForm() {
-        if (!validateForm()) {
-            return false; // Ngăn gửi form nếu có lỗi
-        }
-
-        // Thu thập dữ liệu từ form
-        let formData = {
-            age: $('#age').val(),
-            gender: $('#gender').val(),
-            chest_pain_type: $('#chest_pain_type').val(),
-            resting_blood_pressure: $('#resting_blood_pressure').val(),
-            cholesterol: $('#cholesterol').val(),
-            max_heart_rate: $('#max_heart_rate').val(),
-            exercise_angina: $('#exercise_angina').val(),
-            blood_sugar: $('#blood_sugar').val(),
-            shortness_of_breath: $('#shortness_of_breath').val(),
-            fatigue: $('#fatigue').val(),
-            dizziness: $('#dizziness').val(),
-            chest_pain_frequency: $('#chest_pain_frequency').val(),
-            heart_rate_variability: $('#heart_rate_variability').val(),
-            pulse_pressure: $('#pulse_pressure').val(),
-            ldl_hdl_ratio: $('#ldl_hdl_ratio').val(),
-            stress_level: $('#stress_level').val(),
-            family_history: $('#family_history').val()
-        };
-
-        // Gửi request AJAX
-        $.ajax({
-            url: "{{ url_for('predict_heart') }}",
-            type: 'POST',
-            contentType: 'application/x-www-form-urlencoded',
-            data: formData,
-            success: function (response) {
-                // Xóa class cũ
-                $('#result').removeClass('low moderate high');
-
-                // Xác định class và text cho kết quả dự đoán
-                let risk_level = response.message.split("<br><br>")[0]; // Lấy phần cấp độ rủi ro từ response
-
-                if (risk_level.includes("Nhẹ")) {
-                    $('#result').addClass('low');
-                } else if (risk_level.includes("Trung bình")) {
-                    $('#result').addClass('moderate');
-                } else if (risk_level.includes("Nặng")) {
-                    $('#result').addClass('high');
-                }
-
-                // Hiển thị kết quả
-                $('#result').html(response.message);
-                $('#result').css('color', ''); // Reset color để CSS class có tác dụng
-                // Clear the comparison result when a new prediction is made
-                $('#comparisonResult').html('');
-            },
-            error: function (xhr, status, error) {
-                // Hiển thị lỗi chi tiết hơn
-                let errorMessage = 'Đã có lỗi xảy ra: ';
-                if (xhr.responseJSON && xhr.responseJSON.error) {
-                    errorMessage += xhr.responseJSON.error;
-                } else {
-                    errorMessage += error;
-                }
-                $('#result').html(errorMessage);
-                $('#result').css('color', 'red');
-            }
-        });
-
-        return false; // Ngăn gửi form mặc định
-    }
-    function compareData() {
-            // Thu thập dữ liệu từ form (tương tự như trong submitForm)
-            let formData = {
-                age: $('#age').val(),
-                gender: $('#gender').val(),
-                chest_pain_type: $('#chest_pain_type').val(),
-                resting_blood_pressure: $('#resting_blood_pressure').val(),
-                cholesterol: $('#cholesterol').val(),
-                max_heart_rate: $('#max_heart_rate').val(),
-                exercise_angina: $('#exercise_angina').val(),
-                blood_sugar: $('#blood_sugar').val(),
-                shortness_of_breath: $('#shortness_of_breath').val(),
-                fatigue: $('#fatigue').val(),
-                dizziness: $('#dizziness').val(),
-                chest_pain_frequency: $('#chest_pain_frequency').val(),
-                heart_rate_variability: $('#heart_rate_variability').val(),
-                pulse_pressure: $('#pulse_pressure').val(),
-                ldl_hdl_ratio: $('#ldl_hdl_ratio').val(),
-                stress_level: $('#stress_level').val(),
-                family_history: $('#family_history').val()
-            };
-
-            $.ajax({
-                url: "{{ url_for('predict_heart') }}",
-                type: 'POST',
-                contentType: 'application/x-www-form-urlencoded',
-                data: formData,
-                success: function(response) {
-                    // Hiển thị lời khuyên so sánh
-                    let comparisonAdvice = response.message.split("<br><br>")[1];  // Lấy lời khuyên so sánh
-                     $('#comparisonResult').html(comparisonAdvice);
-                    $('#comparisonResult').css('color', 'green'); // Hoặc màu bạn muốn
-                },
-                error: function(xhr, status, error) {
-                    let errorMessage = 'Đã có lỗi xảy ra: ';
-                    if (xhr.responseJSON && xhr.responseJSON.error) {
-                        errorMessage += xhr.responseJSON.error;
-                    } else {
-                        errorMessage += error;
-                    }
-                    $('#comparisonResult').html(errorMessage);
-                    $('#comparisonResult').css('color', 'red');
-                }
-            });
-        }
 </script>
-<footer class="border-top">
-    <div class="container px-4 px-lg-5">
-        <div class="row gx-4 gx-lg-5 justify-content-center">
-            <div class="col-md-10 col-lg-8 col-xl-7">
-                <ul class="list-inline text-center">
-                    <li class="list-inline-item">
-                        <a href="https://www.facebook.com/messages/t/100004435875948">
-                                    <span class="fa-stack fa-lg">
-                                        <i class="fas fa-circle fa-stack-2x"></i>
-                                        <i class="fab fa-facebook-f fa-stack-1x fa-inverse"></i>
-                                    </span>
-                        </a>
-                    </li>
-                    <li class="list-inline-item">
-                        <a href="https://www.facebook.com/messages/t/100004435875948">
-                                    <span class="fa-stack fa-lg">
-                                        <i class="fas fa-circle fa-stack-2x"></i>
-                                        <i class="fab fa-github fa-stack-1x fa-inverse"></i>
-                                    </span>
-                        </a>
-                    </li>
-                </ul>
-                <div class="small text-center text-muted fst-italic">Copyright © Your Website 2023</div>
-            </div>
-        </div>
-    </div>
-</footer>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 </body>
 </html>
