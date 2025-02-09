@@ -160,10 +160,8 @@ def datapatient():
 
     # Truy vấn dữ liệu từ database
     query = """
-         SELECT patient_id, fullname, age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
-                max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath, fatigue, dizziness,
-                chest_pain_frequency, heart_rate_variability, pulse_pressure, ldl_hdl_ratio, stress_level,
-                family_history, diagnosis
+         SELECT patient_id,fullname,age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
+                max_heart_rate, exercise_angina, blood_sugar, diagnosis
          FROM patients_data_mining
      """
     cursor.execute(query)
@@ -181,6 +179,8 @@ def datapatient():
 
     # Trả về template và truyền dữ liệu vào template
     return render_template('datapatient.html', data=data, params=params)
+
+
 # @app.route('/dataset_test')
 # def dataset_test():
 #     return render_template('Dataset_test.html')
@@ -408,80 +408,57 @@ def logout():
 # Lấy dữ liệu từ cơ sở dữ liệu
 def fetch_data_from_db():
     try:
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor()
-
-        query = """
-            SELECT 
-                patient_id,
-                age,
-                CASE 
+        with mysql.connector.connect(**db_config) as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    SELECT 
+                        patient_id,
+                        age, 
+                        CASE 
                             WHEN gender = 'M' THEN 'Nam'
                             WHEN gender = 'F' THEN 'Nữ'
                             ELSE gender
                         END as gender,
-                
-                chest_pain_type,
-                resting_blood_pressure,
-                cholesterol,
-                max_heart_rate,
-                exercise_angina,
-                blood_sugar,
-                shortness_of_breath,
-                fatigue,
-                dizziness,
-                chest_pain_frequency,
-                heart_rate_variability,
-                pulse_pressure,
-                ldl_hdl_ratio,
-                stress_level,
-                family_history,
-                diagnosis
-            FROM patients_data_mining
-            ORDER BY patient_id
-        """
-        cursor.execute(query)
-        data = cursor.fetchall()
+                        chest_pain_type,
+                        resting_blood_pressure,
+                        cholesterol,
+                        max_heart_rate,
+                        CASE 
+                            WHEN exercise_angina = 'Y' THEN 'Có'
+                            WHEN exercise_angina = 'N' THEN 'Không'
+                            ELSE exercise_angina
+                        END as exercise_angina,
+                        blood_sugar,
+                        diagnosis
+                    FROM patients_data_mining
+                    ORDER BY patient_id
+                """
+                cursor.execute(query)
+                data = cursor.fetchall()
         return data
     except Exception as e:
         raise Exception(f"Lỗi khi load dữ liệu từ db: {str(e)}")
 
 # Chuẩn bị đặc trưng cho từng bệnh nhân và dự đoán
-# Cập nhật hàm chuẩn bị dữ liệu để phân loại thành 3 cấp độ
 def prepare_features(row):
-    # Giả sử bạn đã cập nhật mô hình để phân loại thành 3 lớp
     model = joblib.load('model/heart_disease_rf_model.joblib')
     scaler = joblib.load('model/heart_disease_scaler.joblib')
 
-    # Các tham số khác
-    (patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
-     max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath, fatigue,
-     dizziness, chest_pain_frequency, heart_rate_variability, pulse_pressure,
-     ldl_hdl_ratio, stress_level, family_history, diagnosis) = row #Unpack the row
+    patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol, max_heart_rate, exercise_angina, blood_sugar, diagnosis = row
+    gender_encoded = 1 if gender == 'Nam' else 0
+    exercise_angina_encoded = 1 if exercise_angina == 'Có' else 0
 
-    gender = 1 if gender == 'Nam' else 0
-    exercise_angina = 1 if exercise_angina == 'Có' else 0
-    family_history = 1 if family_history == 'Y' else 0
-    shortness_of_breath = {'None': 0, 'Mild': 1, 'Moderate': 2, 'Severe': 3}[shortness_of_breath]
-    fatigue = {'Never': 0, 'Sometimes': 1, 'Often': 2}[fatigue]
-    dizziness = {'Never': 0, 'Occasional': 1, 'Often': 2}[dizziness]
+    # Bạn có thể cần phải mã hóa thêm chest_pain_type nếu cần
+    chest_pain_type_encoded = chest_pain_type  # Thay đổi mã hóa tùy theo cách bạn lưu trữ giá trị này
 
-    # Mã hóa các chỉ số
-    features = pd.DataFrame([[age, gender, chest_pain_type,
+    features = pd.DataFrame([[age, gender_encoded, chest_pain_type_encoded,
                               resting_blood_pressure, cholesterol,
-                              max_heart_rate, exercise_angina, blood_sugar,
-                              shortness_of_breath, fatigue, dizziness,
-                              chest_pain_frequency, heart_rate_variability, pulse_pressure,
-                              ldl_hdl_ratio, stress_level, family_history]],
+                              max_heart_rate, exercise_angina_encoded, blood_sugar]],
                             columns=['age', 'gender', 'chest_pain_type',
                                      'resting_blood_pressure', 'cholesterol',
-                                     'max_heart_rate', 'exercise_angina', 'blood_sugar',
-                                     'shortness_of_breath', 'fatigue', 'dizziness',
-                                     'chest_pain_frequency', 'heart_rate_variability', 'pulse_pressure',
-                                     'ldl_hdl_ratio', 'stress_level', 'family_history'])
-
+                                     'max_heart_rate', 'exercise_angina', 'blood_sugar'])
     features_scaled = scaler.transform(features)
-    prediction = model.predict(features_scaled)[0]  # Dự đoán cấp độ rủi ro
+    prediction = model.predict(features_scaled)[0]
     return {
         'patient_id': patient_id,
         'age': age,
@@ -492,18 +469,10 @@ def prepare_features(row):
         'max_heart_rate': max_heart_rate,
         'exercise_angina': exercise_angina,
         'blood_sugar': blood_sugar,
-        'shortness_of_breath': shortness_of_breath,
-        'fatigue': fatigue,
-        'dizziness': dizziness,
-        'chest_pain_frequency': chest_pain_frequency,
-        'heart_rate_variability': heart_rate_variability,
-        'pulse_pressure': pulse_pressure,
-        'ldl_hdl_ratio': ldl_hdl_ratio,
-        'stress_level': stress_level,
-        'family_history': family_history,
         'prediction': int(prediction),
         'diagnosis': diagnosis
     }
+
 # Tính toán các thông số đánh giá
 def calculate_metrics(true_labels, predicted_labels):
     accuracy = accuracy_score(true_labels, predicted_labels)
@@ -552,23 +521,16 @@ db_config = {
     'auth_plugin': 'mysql_native_password'
 }
 
-
 def preprocess_data(data):
     """Tiền xử lý dữ liệu"""
     # Chuyển đổi dữ liệu phân loại
     data['gender'] = data['gender'].map({'M': 1, 'F': 0})
     data['exercise_angina'] = data['exercise_angina'].map({'Y': 1, 'N': 0})
-    data['shortness_of_breath'] = data['shortness_of_breath'].map({'None': 0, 'Mild': 1, 'Moderate': 2, 'Severe': 3})
-    data['fatigue'] = data['fatigue'].map({'Never': 0, 'Sometimes': 1, 'Often': 2})
-    data['dizziness'] = data['dizziness'].map({'Never': 0, 'Occasional': 1, 'Often': 2})
-    data['family_history'] = data['family_history'].map({'Y': 1, 'N': 0})
     return data
 
 
 def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
-               max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath, fatigue,
-               dizziness, chest_pain_frequency, heart_rate_variability, pulse_pressure,
-               ldl_hdl_ratio, stress_level, family_history, diagnosis):
+               max_heart_rate, exercise_angina, blood_sugar, diagnosis):
     """Lưu dữ liệu vào cơ sở dữ liệu"""
     try:
         conn = mysql.connector.connect(**db_config)
@@ -581,16 +543,12 @@ def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol
         query = """
         INSERT INTO patients_data_mining 
         (patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol, 
-         max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath, fatigue,
-         dizziness, chest_pain_frequency, heart_rate_variability, pulse_pressure,
-         ldl_hdl_ratio, stress_level, family_history, diagnosis)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+         max_heart_rate, exercise_angina, blood_sugar, diagnosis)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         values = (new_id, age, gender, chest_pain_type, resting_blood_pressure,
-                  cholesterol, max_heart_rate, exercise_angina, blood_sugar,
-                  shortness_of_breath, fatigue, dizziness, chest_pain_frequency,
-                  heart_rate_variability, pulse_pressure, ldl_hdl_ratio,
-                  stress_level, family_history, diagnosis)
+                  cholesterol, max_heart_rate, exercise_angina,
+                  blood_sugar, diagnosis)
 
         cursor.execute(query, values)
         conn.commit()
@@ -602,6 +560,7 @@ def save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol
         cursor.close()
         conn.close()
 
+
 def load_data_from_db():
     """Lấy dữ liệu từ cơ sở dữ liệu"""
     try:
@@ -610,8 +569,7 @@ def load_data_from_db():
 
         query = """
         SELECT age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
-               max_heart_rate, exercise_angina, blood_sugar,shortness_of_breath,fatigue,dizziness,
-               chest_pain_frequency,heart_rate_variability,pulse_pressure,ldl_hdl_ratio,stress_level,family_history, diagnosis
+               max_heart_rate, exercise_angina, blood_sugar, diagnosis
         FROM patients_data_mining
         """
 
@@ -621,8 +579,7 @@ def load_data_from_db():
         data = pd.DataFrame(result, columns=[
             'age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
             'cholesterol', 'max_heart_rate', 'exercise_angina',
-            'blood_sugar','shortness_of_breath','fatigue','dizziness',
-               'chest_pain_frequency','heart_rate_variability','pulse_pressure','ldl_hdl_ratio','stress_level','family_history', 'diagnosis'
+            'blood_sugar', 'diagnosis'
         ])
 
         return data
@@ -634,29 +591,25 @@ def load_data_from_db():
         cursor.close()
         conn.close()
 
+
 def train_model(data):
     """Huấn luyện mô hình Random Forest"""
     try:
         # Tiền xử lý dữ liệu
-        data = preprocess_data(data.copy())  # Pass a copy to avoid modifying the original DataFrame
+        data = preprocess_data(data)
 
         # Chọn đặc trưng
         X = data[['age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
-                  'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar',
-                  'shortness_of_breath', 'fatigue', 'dizziness', 'chest_pain_frequency',
-                  'heart_rate_variability', 'pulse_pressure', 'ldl_hdl_ratio', 'stress_level', 'family_history']]
-        print("Feature columns in train_model:", X.columns)  # Debugging: Print feature names
-        y = data['diagnosis']  # Giả sử bạn đã cập nhật nhãn cho 3 lớp
+                  'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar']]
+        y = data['diagnosis']
 
         # Chia tập dữ liệu
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         # Chuẩn hóa dữ liệu
         scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)  # Cập nhật với đầy đủ đặc trưng mới
-        joblib.dump(scaler, 'model/heart_disease_scaler.joblib')
-
-        X_test_scaled = scaler.transform(X_test)  # Transform the test set using the fitted scaler
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
 
         # Huấn luyện mô hình Random Forest
         model = RandomForestClassifier(n_estimators=100, random_state=42, max_depth=5)
@@ -680,80 +633,136 @@ def train_model(data):
     except Exception as e:
         print(f"Lỗi khi huấn luyện mô hình: {e}")
         return None, None
+from flask import make_response
 
-def compare_with_community(user_data, all_data, threshold=0.1):
+@app.route('/compare_with_community', methods=['GET', 'POST'])
+def compare_with_community():
+    try:
+        # Get data from the form
+        age = int(request.form['age'])
+        gender = request.form['gender']
+        chest_pain_type = int(request.form['chest_pain_type'])
+        resting_blood_pressure = int(request.form['resting_blood_pressure'])
+        cholesterol = int(request.form['cholesterol'])
+        max_heart_rate = int(request.form['max_heart_rate'])
+        exercise_angina = request.form['exercise_angina']
+        blood_sugar = request.form['blood_sugar']
+        data_limit = request.form['data_limit']  # Nhận khoảng số lượng
+
+        # Call the comparison logic
+        comparison_text = compare_with_community_logic(
+            age, gender, chest_pain_type, resting_blood_pressure,
+            cholesterol, max_heart_rate, exercise_angina, blood_sugar, data_limit
+        )
+
+        # Create response object
+        response = jsonify({'message': comparison_text})
+
+        # Add header object and set utf-8
+        response.headers['Content-Type'] = 'application/json; charset=utf-8'
+
+        return response
+
+    except Exception as e:
+        # Create error response
+        error_response = jsonify({'error': str(e)})
+
+        # Add header for error and set utf-8
+        error_response.headers['Content-Type'] = 'application/json; charset=utf-8'
+
+        return error_response, 500  # 500 status code for internal server error
+
+
+def compare_with_community_logic(age, gender, chest_pain_type, resting_blood_pressure, cholesterol,
+               max_heart_rate, exercise_angina, blood_sugar, limit):
     """
-    So sánh dữ liệu của người dùng với dữ liệu cộng đồng và đưa ra lời khuyên chi tiết.
-
-    Args:
-        user_data (pd.Series): Dữ liệu của người dùng (một dòng trong DataFrame).
-        all_data (pd.DataFrame): Toàn bộ dữ liệu (trừ dữ liệu của người dùng).
-        threshold (float): Ngưỡng để coi là "khác biệt" (ví dụ: 0.1 = 10%).
-
-    Returns:
-        str: Lời khuyên dựa trên so sánh.
+    Lấy dữ liệu từ cơ sở dữ liệu và so sánh các cột liên quan đến bệnh nhân
     """
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
 
-    advice = "Dựa trên sự so sánh với dữ liệu cộng đồng:\n"
-    community_means = all_data.mean()
-    community_stds = all_data.std()  # Tính độ lệch chuẩn
+        # Đếm số lượng dữ liệu
+        count_query = "SELECT COUNT(*) FROM patients_data_mining"
+        cursor.execute(count_query)
+        total_count = cursor.fetchone()[0]
 
-    # So sánh từng thuộc tính và đưa ra lời khuyên
-    for feature in user_data.index:
-        if feature in community_means and feature in community_stds:
-            user_value = user_data[feature]
-            community_mean = community_means[feature]
-            community_std = community_stds[feature]
+        # Lấy dữ liệu theo giới hạn
+        limit_value = 50 if limit == '50' else 100 if limit == '100' else total_count
+        query = f"""
+            SELECT 
+                age,
+                gender,
+                chest_pain_type,
+                resting_blood_pressure,
+                cholesterol,
+                max_heart_rate,
+                exercise_angina,
+                blood_sugar
+            FROM patients_data_mining
+            LIMIT {limit_value}
+        """
+        cursor.execute(query)
+        data = cursor.fetchall()
 
-            # Tính Z-score để chuẩn hóa
-            if community_std > 0:  # Avoid division by zero
-                z_score = (user_value - community_mean) / community_std
-            else:
-                z_score = 0  # Nếu độ lệch chuẩn bằng 0, xem xét giá trị là tương đương
+        # Chuyển đổi dữ liệu thành DataFrame
+        df = pd.DataFrame(data, columns=[
+            'age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
+            'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar'
+        ])
 
-            if abs(z_score) > 1:  # Sử dụng Z-score để xác định sự khác biệt
-                if feature == 'age':
-                    advice += f"- Tuổi của bạn {'cao hơn' if user_value > community_mean else 'thấp hơn'} trung bình cộng đồng. {user_value:.0f} so với {community_mean:.0f}.\n"
-                elif feature == 'gender':
-                    advice += f"- Giới tính của bạn {'tương đồng' if user_value == community_mean else 'khác biệt'} so với cộng đồng.\n"
-                elif feature == 'chest_pain_type':
-                    advice += f"- Loại đau ngực của bạn {'tương đồng' if user_value == community_mean else 'khác biệt'} so với cộng đồng.\n"
-                elif feature == 'resting_blood_pressure':
-                    advice += f"- Huyết áp khi nghỉ của bạn {'cao hơn' if user_value > community_mean else 'thấp hơn'}  so với cộng đồng. Giá trị: {user_value:.0f} so với {community_mean:.0f} mmHg.\n"
-                elif feature == 'cholesterol':
-                    advice += f"- Cholesterol của bạn {'cao hơn' if user_value > community_mean else 'thấp hơn'} so với cộng đồng. Giá trị: {user_value:.0f} so với {community_mean:.0f} mg/dL.\n"
-                elif feature == 'max_heart_rate':
-                    advice += f"- Nhịp tim tối đa của bạn {'cao hơn' if user_value > community_mean else 'thấp hơn'} so với cộng đồng. Giá trị: {user_value:.0f} so với {community_mean:.0f} bpm.\n"
-                elif feature == 'exercise_angina':
-                    advice += f"- Đau thắt ngực khi tập: {'có' if user_value == 1 else 'không'} so với cộng đồng.\n"
-                elif feature == 'blood_sugar':
-                    advice += f"- Đường huyết của bạn {'cao' if user_value == 1 else 'bình thường'} so với cộng đồng.\n"
-                elif feature == 'shortness_of_breath':
-                    advice += f"- Khó thở của bạn {'khác biệt' if user_value != community_mean else 'tương đồng'} so với cộng đồng.\n"
-                elif feature == 'fatigue':
-                    advice += f"- Mệt mỏi của bạn {'khác biệt' if user_value != community_mean else 'tương đồng'} so với cộng đồng.\n"
-                elif feature == 'dizziness':
-                    advice += f"- Chóng mặt của bạn {'khác biệt' if user_value != community_mean else 'tương đồng'} so với cộng đồng.\n"
-                elif feature == 'chest_pain_frequency':
-                    advice += f"- Tần suất đau ngực của bạn {'khác biệt' if user_value != community_mean else 'tương đồng'} so với cộng đồng.\n"
-                elif feature == 'heart_rate_variability':
-                    advice += f"- Biến thiên nhịp tim của bạn {'cao hơn' if user_value > community_mean else 'thấp hơn'} so với cộng đồng. Giá trị: {user_value:.0f} so với {community_mean:.0f} ms.\n"
-                elif feature == 'pulse_pressure':
-                    advice += f"- Áp lực mạch của bạn {'cao hơn' if user_value > community_mean else 'thấp hơn'} so với cộng đồng. Giá trị: {user_value:.0f} so với {community_mean:.0f} mmHg.\n"
-                elif feature == 'ldl_hdl_ratio':
-                    advice += f"- Tỷ lệ LDL/HDL của bạn {'cao hơn' if user_value > community_mean else 'thấp hơn'} so với cộng đồng. Giá trị: {user_value:.1f} so với {community_mean:.1f}.\n"
-                elif feature == 'stress_level':
-                    advice += f"- Mức độ căng thẳng của bạn {'cao hơn' if user_value > community_mean else 'thấp hơn'} so với cộng đồng. Giá trị: {user_value:.0f} so với {community_mean:.0f}.\n"
-                elif feature == 'family_history':
-                     advice += f"- Tiền sử gia đình: {'có' if user_value == 1 else 'không'} so với cộng đồng.\n"
-        else:
-            advice += f"- Không thể so sánh {feature} với dữ liệu cộng đồng.\n"
-    advice += "Vui lòng tham khảo ý kiến bác sĩ để được tư vấn chi tiết và có các biện pháp phòng ngừa phù hợp."
-    return advice
+        # Mã hóa dữ liệu
+        df['gender'] = df['gender'].map({'M': 1, 'F': 0})
+        df['exercise_angina'] = df['exercise_angina'].map({'Y': 1, 'N': 0})
+        user_gender_encoded = 1 if gender == 'M' else 0
+        user_exercise_angina_encoded = 1 if exercise_angina == 'Y' else 0
+
+        # Tính toán giá trị trung bình và độ lệch chuẩn
+        age_mean, age_std = df['age'].mean(), df['age'].std()
+        rbp_mean, rbp_std = df['resting_blood_pressure'].mean(), df['resting_blood_pressure'].std()
+        chol_mean, chol_std = df['cholesterol'].mean(), df['cholesterol'].std()
+        mhr_mean, mhr_std = df['max_heart_rate'].mean(), df['max_heart_rate'].std()
+
+        # So sánh dữ liệu bệnh nhân với giá trị trung bình
+        comparison_text = f"So sánh với dữ liệu cộng đồng ({total_count} tổng số bản ghi):\n"
+        if age > age_mean + age_std:
+            comparison_text += f"- Tuổi của bạn ({age}) cao hơn đáng kể so với trung bình cộng đồng ({age_mean:.2f}).\n"
+        elif age < age_mean - age_std:
+            comparison_text += f"- Tuổi của bạn ({age}) thấp hơn đáng kể so với trung bình cộng đồng ({age_mean:.2f}).\n"
+
+        if resting_blood_pressure > rbp_mean + rbp_std:
+            comparison_text += f"- Huyết áp của bạn ({resting_blood_pressure}) cao hơn đáng kể so với trung bình ({rbp_mean:.2f}).\n"
+        elif resting_blood_pressure < rbp_mean - rbp_std:
+            comparison_text += f"- Huyết áp của bạn ({resting_blood_pressure}) thấp hơn đáng kể so với trung bình ({rbp_mean:.2f}).\n"
+
+        if cholesterol > chol_mean + chol_std:
+            comparison_text += f"- Cholesterol của bạn ({cholesterol}) cao hơn đáng kể so với trung bình ({chol_mean:.2f}).\n"
+        elif cholesterol < chol_mean - chol_std:
+            comparison_text += f"- Cholesterol của bạn ({cholesterol}) thấp hơn đáng kể so với trung bình ({chol_mean:.2f}).\n"
+
+        if max_heart_rate < mhr_mean - mhr_std:
+            comparison_text += f"- Nhịp tim tối đa của bạn ({max_heart_rate}) thấp hơn đáng kể so với trung bình ({mhr_mean:.2f}).\n"
+        elif max_heart_rate > mhr_mean + mhr_std:
+            comparison_text += f"- Nhịp tim tối đa của bạn ({max_heart_rate}) cao hơn đáng kể so với trung bình ({mhr_mean:.2f}).\n"
+
+        if user_gender_encoded > df['gender'].mean() + 1:
+            comparison_text += f"- So với cộng đồng thì giới tính của bạn có sự khác biệt lớn\n"
+        if user_exercise_angina_encoded > df['exercise_angina'].mean() + 1:
+            comparison_text += f"- So với cộng đồng thì khả năng đau thắt ngực của bạn có sự khác biệt lớn\n"
+
+        cursor.close()
+        conn.close()
+
+        return comparison_text
+
+    except Exception as e:
+        print(f"Lỗi khi so sánh dữ liệu: {str(e)}")
+        return "Không thể so sánh dữ liệu với cộng đồng."
+
 @app.route('/predict_heart', methods=['GET', 'POST'])
 def predict_heart():
     try:
-        # Load the model and scaler (assuming they are loaded during app initialization)
+        # Load the model and scaler
         model = joblib.load('model/heart_disease_rf_model.joblib')
         scaler = joblib.load('model/heart_disease_scaler.joblib')
 
@@ -767,118 +776,76 @@ def predict_heart():
             max_heart_rate = int(request.form['max_heart_rate'])
             exercise_angina = request.form['exercise_angina']
             blood_sugar = int(request.form['blood_sugar'])
-            shortness_of_breath = request.form['shortness_of_breath']
-            fatigue = request.form['fatigue']
-            dizziness = request.form['dizziness']
-            chest_pain_frequency = int(request.form['chest_pain_frequency'])
-            heart_rate_variability = int(request.form['heart_rate_variability'])
-            pulse_pressure = int(request.form['pulse_pressure'])
-            ldl_hdl_ratio = float(request.form['ldl_hdl_ratio'])
-            stress_level = int(request.form['stress_level'])
-            family_history = request.form['family_history']
 
-            # Encode categorical features (consistent with preprocessing in train_model)
-            gender_encoded = 1 if gender == 'M' else 0  # Assuming 'M' is male, 'F' is female
+            # Mã hóa các thuộc tính
+            gender_encoded = 1 if gender == 'M' else 0
             exercise_angina_encoded = 1 if exercise_angina == 'Y' else 0
-            family_history_encoded = 1 if family_history == 'Y' else 0
 
-            # Encode other categorical features (shortness_of_breath, fatigue, dizziness) - **IMPORTANT: Ensure consistency with preprocess_data() and training**
-            shortness_of_breath_encoded = {'None': 0, 'Mild': 1, 'Moderate': 2, 'Severe': 3}[shortness_of_breath]
-            fatigue_encoded = {'Never': 0, 'Sometimes': 1, 'Often': 2}[fatigue]
-            dizziness_encoded = {'Never': 0, 'Occasional': 1, 'Often': 2}[dizziness]
-
-            # Create a DataFrame for the input features
+            # Chuẩn bị dữ liệu để dự đoán
             features = pd.DataFrame([[
                 age, gender_encoded, chest_pain_type, resting_blood_pressure,
-                cholesterol, max_heart_rate, exercise_angina_encoded, blood_sugar,
-                shortness_of_breath_encoded, fatigue_encoded, dizziness_encoded,
-                chest_pain_frequency, heart_rate_variability, pulse_pressure,
-                ldl_hdl_ratio, stress_level, family_history_encoded
+                cholesterol, max_heart_rate, exercise_angina_encoded, blood_sugar
             ]], columns=[
                 'age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
-                'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar',
-                'shortness_of_breath', 'fatigue', 'dizziness', 'chest_pain_frequency',
-                'heart_rate_variability', 'pulse_pressure', 'ldl_hdl_ratio', 'stress_level', 'family_history'
+                'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar'
             ])
-            print("Feature columns in predict_heart:", features.columns) # Debugging: Print feature names
-            # Scale the features using the fitted scaler
+
+            # Chuẩn hóa đặc trưng
             features_scaled = scaler.transform(features)
 
-            # Make the prediction
+            # Dự đoán kết quả
             prediction = model.predict(features_scaled)[0]
-
-            # Bắt đầu điều chỉnh code cho yêu cầu mới
-            diagnosis = int(prediction)  # Chuyển prediction thành kiểu int
+            result = 1 if prediction == 1 else 0
 
             risk_level = ""
-            if diagnosis == 0:
-                risk_level = "Không có khả năng mắc bệnh tim."  # No risk
-                comparison_advice = "Dữ liệu của bạn tương đồng với cộng đồng. Duy trì lối sống lành mạnh."
-            elif diagnosis == 1:  # Có bệnh
-                # Use the existing features to determine the risk level
-                if (age > 60 or cholesterol > 240 or resting_blood_pressure > 140 or
-                    max_heart_rate < 60 or exercise_angina_encoded == 1 or blood_sugar > 140 or
-                    stress_level > 7 or family_history_encoded == 1):
-                        risk_level = "Nặng (High Risk) - Cần can thiệp y tế ngay."
-                elif (age > 50 or 120 < resting_blood_pressure <= 140 or 180 < cholesterol <= 240 or
-                      60 <= max_heart_rate <= 80):
-                        risk_level = "Trung bình (Moderate Risk) - Cần theo dõi chặt chẽ."
+            if result == 0:
+                risk_level = "Không có nguy cơ mắc bệnh tim."
+            elif result == 1:
+                # Sử dụng các yếu tố để đánh giá mức độ rủi ro (điều chỉnh các ngưỡng cho phù hợp)
+                risk_factors = 0
+                if age > 60:
+                    risk_factors += 1
+                if cholesterol > 240:
+                    risk_factors += 1
+                if resting_blood_pressure > 140:
+                    risk_factors += 1
+                if max_heart_rate < 100:
+                    risk_factors += 1
+                if exercise_angina_encoded == 1:
+                    risk_factors += 1
+                if blood_sugar > 1:
+                    risk_factors += 1
+
+                if risk_factors >= 3:
+                    risk_level = "Nặng (High Risk) - Cần can thiệp y tế ngay."
+                elif risk_factors == 2:
+                    risk_level = "Trung bình (Moderate Risk) - Cần theo dõi chặt chẽ."
                 else:
                     risk_level = "Nhẹ (Low Risk) - Có nguy cơ nhưng chưa nghiêm trọng."
 
-                # Load all data for comparison (only load once)
-                all_data = load_data_from_db()
-                # Convert gender and family_history in all_data to numerical values
-                all_data['gender'] = all_data['gender'].map({'M': 1, 'F': 0})  # Assuming 'M' and 'F' are the only possible values
-                all_data['family_history'] = all_data['family_history'].map({'Y': 1, 'N': 0})
-                all_data['shortness_of_breath'] = all_data['shortness_of_breath'].map({'None': 0, 'Mild': 1, 'Moderate': 2, 'Severe': 3})
-                all_data['fatigue'] = all_data['fatigue'].map({'Never': 0, 'Sometimes': 1, 'Often': 2})
-                all_data['dizziness'] = all_data['dizziness'].map({'Never': 0, 'Occasional': 1, 'Often': 2})
-                all_data = all_data.dropna(subset=['gender', 'family_history','shortness_of_breath', 'fatigue', 'dizziness'])
+            # #Lưu kết quả xuống cơ sở dữ liệu
+            save_to_db(
+                age=age,
+                gender=gender,
+                chest_pain_type=chest_pain_type,
+                resting_blood_pressure=resting_blood_pressure,
+                cholesterol=cholesterol,
+                max_heart_rate=max_heart_rate,
+                exercise_angina=exercise_angina,
+                blood_sugar=blood_sugar,
 
-                # Create user_data as a Series
-                user_data = pd.Series({
-                    'age': age,
-                    'gender': gender_encoded,
-                    'chest_pain_type': chest_pain_type,
-                    'resting_blood_pressure': resting_blood_pressure,
-                    'cholesterol': cholesterol,
-                    'max_heart_rate': max_heart_rate,
-                    'exercise_angina': exercise_angina_encoded,
-                    'blood_sugar': blood_sugar,
-                    'shortness_of_breath': shortness_of_breath_encoded,
-                    'fatigue': fatigue_encoded,
-                    'dizziness': dizziness_encoded,
-                    'chest_pain_frequency': chest_pain_frequency,
-                    'heart_rate_variability': heart_rate_variability,
-                    'pulse_pressure': pulse_pressure,
-                    'ldl_hdl_ratio': ldl_hdl_ratio,
-                    'stress_level': stress_level,
-                    'family_history': family_history_encoded
-                })
+                diagnosis=result
+            )
+            # Trả kết quả về dưới dạng JSON
+            message = risk_level if result== 1 else "Không có khả năng mắc bệnh tim." # return the message
 
-
-                # Get comparison advice
-                comparison_advice = compare_with_community(user_data, all_data)
-
-            else:
-                risk_level = "Không xác định" # Handle unexpected prediction values
-                comparison_advice = ""
-
-            # Save data to the database (optional - but critical for model improvement)
-            # Consider using try-except to handle potential database errors
-
-            save_to_db(age, gender, chest_pain_type, resting_blood_pressure, cholesterol, max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath,fatigue,dizziness,
-                       chest_pain_frequency,heart_rate_variability,pulse_pressure,ldl_hdl_ratio,stress_level,family_history,diagnosis)
-
-            # Return the prediction and advice as JSON
-            return jsonify({'message': risk_level + "<br><br>" + comparison_advice})  # Return both risk and advice
-
+            return jsonify({'message': message})
     except Exception as e:
-        # Handle any errors that occur during the prediction process
-        return jsonify({'error': str(e)}), 500  # Return an error message as JSON
-    # If the request method is GET, render the prediction form
+        return jsonify({'error': str(e)}), 500
+
+    # Nếu phương thức là GET, hiển thị form
     return render_template('predict.html')
+
 
 # Khởi tạo mô hình ban đầu khi ứng dụng chạy
 def init_model():
