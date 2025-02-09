@@ -866,7 +866,7 @@ def perform_kmeans_clustering(data):
     kmeans = KMeans(n_clusters=3, random_state=42)
     data['cluster'] = kmeans.fit_predict(X_scaled)
 
-    return data
+    return data.
 
 
 # Chạy ứng dụng Flask
