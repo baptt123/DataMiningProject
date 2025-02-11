@@ -1,0 +1,144 @@
+<div class="row mt-5">
+    <div class="col-md-12">
+        <canvas id="cvChart"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var labels = ['Fold 1', 'Fold 2', 'Fold 3', 'Fold 4', 'Fold 5', 'Mean'];
+
+    var accuracyScores = {{ accuracies | tojson }};
+    var precisionScores = {{ precisions | tojson }};
+    var recallScores = {{ recalls | tojson }};
+    var f1Scores = {{ f1_scores | tojson }};
+
+    // Thêm giá trị trung bình vào cuối danh sách
+    accuracyScores.push({{ accuracy_mean }});
+    precisionScores.push({{ precision_mean }});
+    recallScores.push({{ recall_mean }});
+    f1Scores.push({{ f1_mean }});
+
+    var cvCtx = document.getElementById('cvChart').getContext('2d');
+    var cvChart = new Chart(cvCtx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Accuracy',
+                    data: accuracyScores,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Precision',
+                    data: precisionScores,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Recall',
+                    data: recallScores,
+                    backgroundColor: 'rgba(255, 206, 86, 0.6)',
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'F1-score',
+                    data: f1Scores,
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Cross Validation Metrics (5 Folds + Mean)'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Score'
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết quả Cross Validation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h2>Kết quả Cross Validation</h2>
+
+    <canvas id="cvChart"></canvas>
+
+    <script>
+        const ctx = document.getElementById('cvChart').getContext('2d');
+        const cvChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Fold 1', 'Fold 2', 'Fold 3', 'Fold 4', 'Fold 5'],
+                datasets: [
+                    {
+                        label: 'Accuracy',
+                        data: {{ accuracies | tojson }},
+                        borderColor: 'blue',
+                        fill: false
+                    },
+                    {
+                        label: 'Precision',
+                        data: {{ precisions | tojson }},
+                        borderColor: 'green',
+                        fill: false
+                    },
+                    {
+                        label: 'Recall',
+                        data: {{ recalls | tojson }},
+                        borderColor: 'orange',
+                        fill: false
+                    },
+                    {
+                        label: 'F1-score',
+                        data: {{ f1_scores | tojson }},
+                        borderColor: 'red',
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Cross Validation Metrics per Fold'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 1
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

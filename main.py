@@ -649,48 +649,45 @@ def load_data_from_db():
 
 
 def perform_cross_validation(data):
-    """
-    Thực hiện cross-validation trên dữ liệu trước khi huấn luyện mô hình chính thức
-    """
+    """Thực hiện cross-validation trên dữ liệu"""
     try:
-        # Tiền xử lý dữ liệu
-        data = preprocess_data(data)
+        processed_data = preprocess_data(data)
+        if processed_data is None:
+            raise ValueError("Dữ liệu tiền xử lý không hợp lệ")
 
-        # Chuẩn bị dữ liệu
-        X = data[['age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
-                  'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar',
-                  'shortness_of_breath', 'fatigue', 'dizziness',
-                  'chest_pain_frequency', 'heart_rate_variability',
-                  'pulse_pressure', 'ldl_hdl_ratio', 'stress_level',
-                  'family_history']]
-        y = data['diagnosis']
+        feature_columns = [
+            'age', 'gender', 'chest_pain_type', 'resting_blood_pressure',
+            'cholesterol', 'max_heart_rate', 'exercise_angina', 'blood_sugar',
+            'shortness_of_breath', 'fatigue', 'dizziness',
+            'chest_pain_frequency', 'heart_rate_variability',
+            'pulse_pressure', 'ldl_hdl_ratio', 'stress_level',
+            'family_history'
+        ]
 
-        # Khởi tạo các công cụ cần thiết
+        missing_columns = [col for col in feature_columns if col not in processed_data.columns]
+        if missing_columns:
+            print(f"Cảnh báo: Thiếu các cột sau trong dữ liệu: {missing_columns}")
+            feature_columns = [col for col in feature_columns if col in processed_data.columns]
+
+        X = processed_data[feature_columns]
+        y = processed_data['diagnosis']
+
         cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
         scaler = StandardScaler()
         model = RandomForestClassifier(n_estimators=100, random_state=42, max_depth=5)
 
-        # Khởi tạo lists để lưu kết quả
-        accuracies = []
-        precisions = []
-        recalls = []
-        f1_scores = []
+        accuracies, precisions, recalls, f1_scores = [], [], [], []
 
-        # Thực hiện cross-validation
         for fold, (train_idx, val_idx) in enumerate(cv.split(X, y), 1):
-            # Chia dữ liệu
             X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
             y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
 
-            # Chuẩn hóa dữ liệu
             X_train_scaled = scaler.fit_transform(X_train)
             X_val_scaled = scaler.transform(X_val)
 
-            # Huấn luyện và đánh giá
             model.fit(X_train_scaled, y_train)
             y_pred = model.predict(X_val_scaled)
 
-            # Tính toán các metrics
             accuracies.append(accuracy_score(y_val, y_pred))
             precisions.append(precision_score(y_val, y_pred, zero_division=0))
             recalls.append(recall_score(y_val, y_pred, zero_division=0))
@@ -702,30 +699,41 @@ def perform_cross_validation(data):
             print(f"Recall: {recalls[-1]:.3f}")
             print(f"F1-score: {f1_scores[-1]:.3f}")
 
-        # Tính toán kết quả trung bình và độ lệch chuẩn
-        results = {
+        return {
+            'accuracies': accuracies,
+            'precisions': precisions,
+            'recalls': recalls,
+            'f1_scores': f1_scores,
             'accuracy_mean': np.mean(accuracies),
-            'accuracy_std': np.std(accuracies),
             'precision_mean': np.mean(precisions),
-            'precision_std': np.std(precisions),
             'recall_mean': np.mean(recalls),
-            'recall_std': np.std(recalls),
             'f1_mean': np.mean(f1_scores),
-            'f1_std': np.std(f1_scores)
         }
-
-        print("\nKết quả cross-validation tổng hợp:")
-        print(f"Accuracy: {results['accuracy_mean']:.3f} (±{results['accuracy_std']:.3f})")
-        print(f"Precision: {results['precision_mean']:.3f} (±{results['precision_std']:.3f})")
-        print(f"Recall: {results['recall_mean']:.3f} (±{results['recall_std']:.3f})")
-        print(f"F1-score: {results['f1_mean']:.3f} (±{results['f1_std']:.3f})")
-
-        return results
 
     except Exception as e:
         print(f"Lỗi khi thực hiện cross-validation: {e}")
         return None
 
+@app.route('/cross-validation')
+def cross_validation():
+    # Hiển thị dữ liệu
+    data = load_data_from_db()  # Load dữ liệu từ MariaDB
+    results = perform_cross_validation(data)
+
+    if results is None:
+        return "Lỗi trong quá trình xử lý dữ liệu", 500
+
+    return render_template(
+        'cross-validation.html',
+        accuracies=results["accuracies"],
+        precisions=results["precisions"],
+        recalls=results["recalls"],
+        f1_scores=results["f1_scores"],
+        accuracy_mean=results["accuracy_mean"],
+        precision_mean=results["precision_mean"],
+        recall_mean=results["recall_mean"],
+        f1_mean=results["f1_mean"]
+    )
 
 def train_model(data):
     """Huấn luyện mô hình Random Forest với cross-validation"""
