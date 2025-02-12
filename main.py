@@ -1,5 +1,6 @@
 import csv
 import os
+import secrets
 
 from mysql.connector import Error
 import joblib
@@ -19,6 +20,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 # Biến toàn cục để lưu mô hình và scaler
 global model, scaler
 app = Flask(__name__, static_folder='static')
+app.secret_key = secrets.token_hex(16)  # Tạo khóa bí mật 32 ký tự
 # Cấu hình kết nối MySQL
 db_config = {
     'host': 'localhost',
@@ -31,14 +33,14 @@ db_config = {
 # Routes for each HTML page
 @app.route('/')
 def welcome():
-    return redirect('/cross_validation')
+    return redirect('/cross-validation')
 
 
 @app.route('/index')
 def index():
     if 'username' not in session:
         flash('Vui lòng đăng nhập trước.', 'warning')
-        return redirect(url_for('login'))
+        return redirect('/login')
     return render_template('index.html')
 
 
@@ -414,7 +416,7 @@ def fetch_data_from_db_for_exportpdf():
                         blood_sugar,
                         diagnosis
                     FROM patients_data_mining
-                    ORDER BY patient_id
+                 
                 """
                 cursor.execute(query)
                 data = cursor.fetchall()
@@ -423,92 +425,17 @@ def fetch_data_from_db_for_exportpdf():
         raise Exception(f"Lỗi khi load dữ liệu từ db: {str(e)}")
 
 
-# Chuẩn bị đặc trưng cho từng bệnh nhân và dự đoán
-def prepare_features(row):
-    model = joblib.load('models/random_forest_model_latest.joblib')
-    scaler = joblib.load('models/random_forest_scaler_latest.joblib')
-
-    (patient_id, age, gender, chest_pain_type, resting_blood_pressure, cholesterol, max_heart_rate, exercise_angina,
-     blood_sugar, shortness_of_breath,
-     fatigue, dizziness, chest_pain_frequency, heart_rate_variability, pulse_pressure, ldl_hdl_ratio, stress_level,
-     family_history, diagnosis) = row
-    gender_encoded = 1 if gender == 'M' else 0
-    exercise_angina_encoded = 1 if exercise_angina == 'Y' else 0
-
-    # Bạn có thể cần phải mã hóa thêm chest_pain_type nếu cần
-    chest_pain_type_encoded = chest_pain_type  # Thay đổi mã hóa tùy theo cách bạn lưu trữ giá trị này
-
-    features = pd.DataFrame([[age, gender_encoded, chest_pain_type_encoded,
-                              resting_blood_pressure, cholesterol,
-                              max_heart_rate, exercise_angina_encoded, blood_sugar, shortness_of_breath,
-                              fatigue, dizziness, chest_pain_frequency, heart_rate_variability, pulse_pressure,
-                              ldl_hdl_ratio, stress_level, family_history, ]],
-                            columns=['age', 'gender', 'chest_pain_type',
-                                     'resting_blood_pressure', 'cholesterol',
-                                     'max_heart_rate', 'exercise_angina', 'blood_sugar', 'shortness_of_breath',
-                                     'fatigue', 'dizziness', 'chest_pain_frequency',
-                                     'heart_rate_variability', 'pulse_pressure', 'ldl_hdl_ratio', 'stress_level',
-                                     'family_history', 'diagnosis'
-                                     ])
-    features_scaled = scaler.transform(features)
-    prediction = model.predict(features_scaled)[0]
-    return {
-        'patient_id': patient_id,
-        'age': age,
-        'gender': gender,
-        'chest_pain_type': chest_pain_type,
-        'resting_blood_pressure': resting_blood_pressure,
-        'cholesterol': cholesterol,
-        'max_heart_rate': max_heart_rate,
-        'exercise_angina': exercise_angina,
-        'blood_sugar': blood_sugar,
-        'shortness_of_breath': shortness_of_breath,
-        'fatigue': fatigue,
-        'dizziness': dizziness,
-        'chest_pain_frequency': chest_pain_frequency,
-        'heart_rate_variability': heart_rate_variability,
-        'pulse_pressure': pulse_pressure,
-        'ldl_hdl_ratio': ldl_hdl_ratio,
-        'stress_level': stress_level,
-        'family_history': family_history,
-        'prediction': int(prediction),
-        'diagnosis': diagnosis
-    }
-
-
-# Tính toán các thông số đánh giá
-def calculate_metrics_for_exportpdf(true_labels, predicted_labels):
-    accuracy = accuracy_score(true_labels, predicted_labels)
-    precision = precision_score(true_labels, predicted_labels, average='binary', pos_label=1, zero_division=0)
-    recall = recall_score(true_labels, predicted_labels, average='binary', pos_label=1, zero_division=0)
-    f1 = f1_score(true_labels, predicted_labels, average='binary', pos_label=1, zero_division=0)
-    cm = confusion_matrix(true_labels, predicted_labels)
-
-    return accuracy, precision, recall, f1, cm
-
-
-# Chuyển ma trận nhầm lẫn thành DataFrame
-def convert_cm_to_df(cm):
-    cm_df = pd.DataFrame(cm, columns=["Predicted Negative", "Predicted Positive"],
-                         index=["True Negative", "True Positive"])
-    return cm_df
 
 
 # Route chính để xuất báo cáo PDF
 @app.route('/exportpdf')
-def export_pdf():
+def exportpdf():
     try:
         data = fetch_data_from_db_for_exportpdf()
-        results = [prepare_features(row) for row in data]
 
-        true_labels = [row['diagnosis'] for row in results]  # Lấy nhãn thực tế
-        predicted_labels = [row['prediction'] for row in results]  # Lấy nhãn dự đoán
 
-        accuracy, precision, recall, f1, cm = calculate_metrics_for_exportpdf(true_labels, predicted_labels)
-        cm_df = convert_cm_to_df(cm)
-
-        return render_template('exportpdf.html', data=results, accuracy=accuracy,
-                               precision=precision, recall=recall, f1=f1, cm=cm_df.to_html())
+        return render_template('exportpdf.html', data=data,
+                               )
     except Exception as e:
         return f"Lỗi khi lấy dữ liệu: {str(e)}"
 
@@ -553,7 +480,7 @@ def save_to_csv_for_predict(fullname, age, gender, chest_pain_type, resting_bloo
                             max_heart_rate, exercise_angina, blood_sugar, shortness_of_breath, fatigue, dizziness,
                             chest_pain_frequency, heart_rate_variability, pulse_pressure, ldl_hdl_ratio,
                             stress_level, family_history, diagnosis,
-                            filename='data/heart_diseases_data_updated_5_2_25.csv'):
+                            filename='data/heart_disease_data_updated_5_2_25.csv'):
     """Lưu dữ liệu vào file CSV"""
     try:
         # Tạo thư mục nếu chưa tồn tại
@@ -741,7 +668,6 @@ def predict_heart():
                 'shortness_of_breath': shortness_of_breath_str,
                 'fatigue': fatigue_str,
                 'dizziness': dizziness_str,
-                'risk_factors': risk_factors,
                 'risk_level': risk_level
             })
 

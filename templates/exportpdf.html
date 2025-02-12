@@ -74,25 +74,12 @@
    <div class="container">
        <div class="header">
            <h1>Dữ liệu bệnh nhân</h1>
-           <a href="{{ url_for('test_export_pdf') }}" class="export-button">
+           <a href="{{ url_for('exportpdf') }}" class="export-button">
                Tải xuống PDF
            </a>
        </div>
 
-       <div class="row mb-5">
-           <div class="col-md-6">
-               <h4>Đánh giá mô hình</h4>
-               <p><strong>Độ chính xác (Accuracy):</strong> {{ accuracy }}</p>
-               <p><strong>Precision:</strong> {{ precision }}</p>
-               <p><strong>Recall:</strong> {{ recall }}</p>
-               <p><strong>F1-Score:</strong> {{ f1 }}</p>
-           </div>
 
-           <div class="col-md-6">
-               <h4>Ma trận nhầm lẫn</h4>
-               <div>{{ cm | safe }}</div>
-           </div>
-       </div>
 
        <div class="table-responsive">
            <table id="patientTable" class="table table-striped table-bordered">
@@ -123,7 +110,7 @@
                        <td>{{ row['exercise_angina'] }}</td>
                        <td>{{ row['blood_sugar'] }}</td>
                        <td>
-                           <span class="status {% if row['prediction'] == 1 %}status-positive{% else %}status-negative{% endif %}">
+                           <span class="status {% if row['diagnose'] == 1 %}status-positive{% else %}status-negative{% endif %}">
                                {% if row['prediction'] == 1 %}Có bệnh{% else %}Không có bệnh{% endif %}
                            </span>
                        </td>

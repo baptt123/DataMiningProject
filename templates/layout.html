@@ -28,11 +28,9 @@
                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="/index">Trang chủ</a></li>
                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="/about">Về chúng tôi</a></li>
                    <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="/predict">Chẩn đoán bệnh</a></li>
-                   {% if session['role']=='admin' %}
                        <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="/datapatient">Dữ liệu bệnh nhân</a></li>
                        <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="/exportpdf">Báo cáo</a></li>
                        <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4" href="/chart">Thống kê</a></li>
-                   {% endif %}
                    <li class="nav-item dropdown">
                        {% if session.get('username') %}
                            <a class="nav-link dropdown-toggle px-lg-3 py-3 py-lg-4" href="#" id="navbarDropdown"
