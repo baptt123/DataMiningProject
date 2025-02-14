@@ -112,3 +112,5 @@ patient_id,fullname,age,gender,chest_pain_type,resting_blood_pressure,cholestero
 113,tan,60,F,2,150,150,150,Y,Normal,None,None,None,2,30,30,2.0,5,1,0
 114,testuser,60,F,3,150,150,150,Y,Normal,None,None,None,2,30,40,3.0,5,1,0
 115,a,30,F,3,150,180,145,Y,Normal,None,None,None,2,30,40,3.0,4,1,0
+116,a,50,M,2,150,150,150,Y,Normal,None,None,None,2,30,40,2.0,2,1,0
+117,a,50,M,2,150,150,150,Y,Normal,None,None,None,2,30,40,2.0,2,1,0
