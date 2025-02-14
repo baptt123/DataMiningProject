@@ -33,7 +33,7 @@ db_config = {
 # Routes for each HTML page
 @app.route('/')
 def welcome():
-    return redirect('/cross-validation')
+    return redirect('/index')
 
 
 @app.route('/index')
@@ -691,6 +691,14 @@ def perform_kmeans_clustering(data):
     return data
 
 
+from flask import session, render_template
+import mysql.connector
+from mysql.connector import Error
+
+from flask import session, render_template
+import mysql.connector
+from mysql.connector import Error
+
 @app.route("/datauser")
 def datauser():
     try:
@@ -698,19 +706,30 @@ def datauser():
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)  # Fetch results as dictionary
         fullName = session.get('username')
-        # Query to get all patients
-        cursor.execute(
-            "SELECT * FROM patients_data_mining join users on patients_data_mining.fullname=users.username where patients_data_mining.fullname=fullName")
-        patients = cursor.fetchall()
+
+        patients = []  # Mặc định là danh sách rỗng nếu không có user
+
+        if fullName:
+            # Query to get all patients for the logged-in user (use parameterized query)
+            query = """
+                SELECT * FROM patients_data_mining 
+                JOIN users ON patients_data_mining.fullname = users.username 
+                WHERE patients_data_mining.fullname = %s
+            """
+            cursor.execute(query, (fullName,))
+            patients = cursor.fetchall()
 
         # Close the connection
         cursor.close()
         conn.close()
+
         print('Dữ liệu:', patients)
         return render_template('datauser.html', patients=patients)
 
     except Error as e:
-        return f"Error connecting to MySQL database: {e}"
+        return f"Error connecting to MySQL database: {str(e)}", 500
+
+
 
 
 @app.route('/compare_with_community', methods=['GET', 'POST'])

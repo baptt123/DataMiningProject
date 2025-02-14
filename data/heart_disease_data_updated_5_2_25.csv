@@ -110,3 +110,5 @@ patient_id,fullname,age,gender,chest_pain_type,resting_blood_pressure,cholestero
 109, a, 30, F, 2, 150, 320, 123, N, High, Moderate, Sometimes, Often, 3, 40, 50, 3.0, 6, Y, 1
 110, a, 20, F, 1, 150, 400, 200, Y, High, Severe, Often, Often, 4, 55, 63, 4.0, 9, Y, 1
 113,tan,60,F,2,150,150,150,Y,Normal,None,None,None,2,30,30,2.0,5,1,0
+114,testuser,60,F,3,150,150,150,Y,Normal,None,None,None,2,30,40,3.0,5,1,0
+115,a,30,F,3,150,180,145,Y,Normal,None,None,None,2,30,40,3.0,4,1,0
