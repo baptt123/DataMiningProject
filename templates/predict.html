@@ -144,4 +144,51 @@
 
     <div id="result"></div>
 </body>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#heartDiseaseForm').on('submit', function(e) {
+            e.preventDefault(); // Ngăn chặn submit mặc định
+
+            // Thu thập dữ liệu từ form
+            let formData = {
+                age: $('#age').val(),
+                gender: $('#gender').val(),
+                fullname: $('#fullname').val(),
+                chest_pain_type: $('#chest_pain_type').val(),
+                resting_blood_pressure: $('#resting_blood_pressure').val(),
+                cholesterol: $('#cholesterol').val(),
+                max_heart_rate: $('#max_heart_rate').val(),
+                exercise_angina: $('#exercise_angina').val(),
+                blood_sugar: $('#blood_sugar').val(),
+                shortness_of_breath: $('#shortness_of_breath').val(),
+                fatigue: $('#fatigue').val(),
+                dizziness: $('#dizziness').val(),
+                chest_pain_frequency: $('#chest_pain_frequency').val(),
+                heart_rate_variability: $('#heart_rate_variability').val(),
+                pulse_pressure: $('#pulse_pressure').val(),
+                ldl_hdl_ratio: $('#ldl_hdl_ratio').val(),
+                stress_level: $('#stress_level').val(),
+                family_history: $('#family_history').val(),
+            };
+
+            // Gửi AJAX tới predict_heart
+            $.ajax({
+                url: "/predict_heart",  // Ensure this matches the Flask route URL
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    // Hiển thị kết quả dự đoán
+                    let resultText = response.risk_level;
+                    $('#result').html(resultText);
+                    $('#result').css('color', (response.risk_level.includes('Không có nguy cơ')) ? 'green' : 'red');
+                },
+                error: function(xhr) {
+                    $('#result').html('Đã có lỗi xảy ra: ' + xhr.responseJSON.error);
+                    $('#result').css('color', 'red');
+                }
+            });
+        });
+    });
+</script>
 </html>
